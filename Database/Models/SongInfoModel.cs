@@ -5,7 +5,7 @@ namespace SwiftTrueRandom.Database.Models
     public class SongInfoModel : SongModel
     {
         [Key]
-        public int DatabaseKey { get; set; }
+        public int SongId { get; set; }
 
         public int StartPoint { get; private set; } = 0;
 

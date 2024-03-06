@@ -1,6 +1,6 @@
 ﻿namespace SwiftTrueRandom.Database.Models
 {
-    public class SongModel
+    public abstract class SongModel
     {
         public string Artist { get; private set; } = "";
 
