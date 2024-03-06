@@ -2,8 +2,51 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <button class="btn btn-primary" id="PlayButton">Play</button>
+<div class="container text-center">
+    <div class="col">
+        <div class="row">
+            <div class="container-fluid">
+                <div class="col">
+                    <div class="row">
+                        <button class="btn btn-primary" id="PlayButton">Play</button>
+                    </div>
+                    <div class="row">
+                        <div id="PlayProgress" class="progress-bar progress-bar-striped progress-bar-animated">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="padding-top: 50px">
+            <div class="container-fluid">
+                <div class="col">
+                    <div class="row">
+                        <span id="guess" hidden></span>
+                        <div class="input-group">
+                            <input type="text" class="form-control" />
+                            <button type="button" class="btn btn-secondary">Submit</button>
+                        </div>
+                    </div>
+                    <div class="row" style="background-color: dimgrey">
+                        <span id="guess"></span>
+                    </div>
+                    <div class="row" style="background-color: dimgrey">
+                        <span id="guess"> </span>
+                    </div>
+                    <div class="row" style="background-color: dimgrey">
+                        <span id="guess"> </span>
+                    </div>
+                    <div class="row" style="background-color: dimgrey">
+                        <span id="guess"> </span>
+                    </div>
+                    <div class="row" style="background-color: dimgrey">
+                        <span id="guess"> </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 </div>
 
 <script type="text/javascript" src="~/js/index.js"></script>

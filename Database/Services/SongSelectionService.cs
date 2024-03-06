@@ -25,17 +25,10 @@ namespace SwiftTrueRandom.Database.Services
 
             using var scope = scopeFactory.CreateScope();
             var backendDatabase = scope.ServiceProvider.GetRequiredService<BackendDatabase>();
-            var todaysSong = backendDatabase.SongCalender.LastOrDefault();
+            var todaysSong = backendDatabase.SongCalender.FirstOrDefault(song => song.DateUsed.Date == DateTime.Now.Date);
             if (todaysSong != default)
             {
-                if (todaysSong.DateUsed.Day == DateTime.Now.Day)
-                {
-                    LoadTodaysSong(todaysSong.Artist, todaysSong.AlbumTitle, todaysSong.SongTitle, todaysSong.StartPoint);
-                }
-                else
-                {
-                    GenerateTodaysSong();
-                }
+                LoadTodaysSong(todaysSong.Artist, todaysSong.AlbumTitle, todaysSong.SongTitle, todaysSong.StartPoint);
             }
             else
             {
@@ -92,8 +85,7 @@ namespace SwiftTrueRandom.Database.Services
         {
             using var scope = scopeFactory.CreateScope();
             char slashToUse;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ||
-                    RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 slashToUse = '/';
             }
@@ -127,8 +119,7 @@ namespace SwiftTrueRandom.Database.Services
         private void LoadTodaysSong(string artist, string album, string song, int startPoint)
         {
             var path = "";
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ||
-                    RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 path = $"{SongsBasePath}/{artist}/{album}/{song}.wav";
             }
