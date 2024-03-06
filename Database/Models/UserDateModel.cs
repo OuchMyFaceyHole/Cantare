@@ -11,13 +11,13 @@ namespace SwiftTrueRandom.Database.Models
 
         public List<GuessModel> Guesses { get; set; } = new List<GuessModel>();
 
-        public SongInfoModel Song { get; private set; }
+        public CalendarSongModel Song { get; private set; }
 
-        public DateTime SongDate { get => Song.DateUsed;  }
+        public DateTime SongDate => Song.DateUsed;
 
         public UserDateModel() { }
 
-        public UserDateModel(SongInfoModel song)
+        public UserDateModel(CalendarSongModel song)
         {
             Song = song;
         }

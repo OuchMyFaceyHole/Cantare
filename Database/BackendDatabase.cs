@@ -7,6 +7,26 @@ namespace SwiftTrueRandom.Database
     {
         public BackendDatabase(DbContextOptions<BackendDatabase> options) : base(options) { }
 
-        public DbSet<SongInfoModel> SongCalender { get; set; }
+        public DbSet<SongModel> AvailableSongs { get; set; }
+
+        public DbSet<CalendarSongModel> SongCalender { get; set; }
+
+        public DbSet<UserModel> Users { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<UserModel>()
+                .HasMany(u => u.CalendarAnswers)
+                .WithOne()
+                .IsRequired();
+
+            modelBuilder.Entity<UserDateModel>()
+                .HasMany(u => u.Guesses)
+                .WithOne()
+                .IsRequired();
+
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

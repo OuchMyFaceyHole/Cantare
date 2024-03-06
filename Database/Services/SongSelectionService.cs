@@ -12,6 +12,8 @@ namespace SwiftTrueRandom.Database.Services
 
         private readonly string SongsBasePath;
 
+        private readonly char SlashToUse;
+
         private const uint byteRate = 176400;
 
         private const uint bytesToCopy = 1058400;
@@ -23,15 +25,30 @@ namespace SwiftTrueRandom.Database.Services
             this.scopeFactory = scopeFactory;
             SongsBasePath = configuration["SongsBasePath"];
 
-            using var scope = scopeFactory.CreateScope();
-            var backendDatabase = scope.ServiceProvider.GetRequiredService<BackendDatabase>();
-            var todaysSong = backendDatabase.SongCalender.FirstOrDefault(song => song.DateUsed.Date == DateTime.Now.Date);
-            if (todaysSong != default)
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                LoadTodaysSong(todaysSong.Artist, todaysSong.AlbumTitle, todaysSong.SongTitle, todaysSong.StartPoint);
+                SlashToUse = '/';
             }
             else
             {
+                SlashToUse = '\\';
+            }
+
+            using var scope = scopeFactory.CreateScope();
+            var backendDatabase = scope.ServiceProvider.GetRequiredService<BackendDatabase>();
+            if (!backendDatabase.AvailableSongs.Any())
+            {
+                CheckDirectory();
+            }
+            var todaysSong = backendDatabase.SongCalender.FirstOrDefault(song => song.DateUsed.Date == DateTime.Now.Date);
+            if (todaysSong != default)
+            {
+                TodaysSongData.Clear();
+                TodaysSongData.Add(GenerateSongSnippet(todaysSong.SongInfo.SongPath, todaysSong.StartPoint).songData);
+            }
+            else
+            {
+                TodaysSongData.Clear();
                 GenerateTodaysSong();
             }
         }
@@ -84,51 +101,44 @@ namespace SwiftTrueRandom.Database.Services
         private void GenerateTodaysSong()
         {
             using var scope = scopeFactory.CreateScope();
-            char slashToUse;
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                slashToUse = '/';
-            }
-            else
-            {
-                slashToUse = '\\';
-            }
-
-            var baseDirectory = Directory.GetDirectories(SongsBasePath);
-            var rand = new Random();
-
-            var artistFullPath = baseDirectory[rand.Next(baseDirectory.Length)];
-            var artist = artistFullPath.Split(SongsBasePath + slashToUse)[1];
-
-            var artistDirectory = Directory.GetDirectories(artistFullPath);
-            var albumFullPath = artistDirectory[rand.Next(artistDirectory.Length)];
-            var album = albumFullPath.Split(artistFullPath + slashToUse)[1];
-
-            var albumDirectory = Directory.GetFiles(albumFullPath);
-            var songFullPath = albumDirectory[rand.Next(albumDirectory.Length)];
-            var song = songFullPath.Split(albumFullPath + slashToUse)[1].Split('.')[0];
-
-            var songData = GenerateSongSnippet(songFullPath);
-            
             var backendDatabase = scope.ServiceProvider.GetRequiredService<BackendDatabase>();
-            backendDatabase.SongCalender.Add(new Models.SongInfoModel(artist, album, song, songData.startPoint));
+            var rand = new Random();
+            var songToUse = backendDatabase.AvailableSongs.Skip(rand.Next(0, backendDatabase.AvailableSongs.Count() - 1)).Take(1).ToArray()[0];
+
+            var songData = GenerateSongSnippet(songToUse.SongPath);
+            
+            backendDatabase.SongCalender.Add(new Models.CalendarSongModel(songData.startPoint, songToUse));
             backendDatabase.SaveChanges();
             TodaysSongData.Add(songData.songData);
         }
 
-        private void LoadTodaysSong(string artist, string album, string song, int startPoint)
+        private void CheckDirectory()
         {
-            var path = "";
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            using var scope = scopeFactory.CreateScope();
+            var backendDatabase = scope.ServiceProvider.GetRequiredService<BackendDatabase>();
+
+            var songPaths = Directory.EnumerateFiles(SongsBasePath, "*.wav", SearchOption.AllDirectories);
+            foreach (var song in songPaths)
             {
-                path = $"{SongsBasePath}/{artist}/{album}/{song}.wav";
+                try
+                {
+                    var songSplit = song.Split(SongsBasePath + SlashToUse)[1].Split(SlashToUse);
+                    var songMatch = backendDatabase.AvailableSongs.FirstOrDefault(sng => sng.Artist == songSplit[0] && 
+                        sng.AlbumTitle == songSplit[1] && sng.SongTitle == songSplit[2]);
+                    if (songMatch == default)
+                    {
+                        backendDatabase.AvailableSongs.Add(new Models.SongModel(songSplit[0], songSplit[1], songSplit[2].Split(".")[0], song));
+                    }
+                    else if (songMatch.SongPath != song)
+                    {
+                        backendDatabase.AvailableSongs.Remove(songMatch);
+                        backendDatabase.AvailableSongs.Add(new Models.SongModel(songSplit[0], songSplit[1], songSplit[2].Split(".")[0], song));
+                    }
+                }
+                catch { }
             }
-            else
-            {
-                path = $"{SongsBasePath}\\{artist}\\{album}\\{song}.wav";
-            }
-            var newSongData = GenerateSongSnippet(path, startPoint);
-            TodaysSongData.Add(newSongData.songData);
+
+            backendDatabase.SaveChanges();
         }
     }
 }

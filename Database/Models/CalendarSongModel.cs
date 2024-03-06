@@ -2,21 +2,24 @@
 
 namespace SwiftTrueRandom.Database.Models
 {
-    public class SongInfoModel : SongModel
+    public class CalendarSongModel
     {
         [Key]
         public int DatabaseKey { get; set; }
+
+        public SongModel SongInfo { get; set; } = new SongModel();
 
         public int StartPoint { get; private set; } = 0;
 
         public DateTime DateUsed { get; private set; } = DateTime.MinValue;
 
-        public SongInfoModel() { }
+        public CalendarSongModel() { }
 
-        public SongInfoModel(string artist, string albumTitle, string songTitle, int startPoint) : base(artist, albumTitle, songTitle)
+        public CalendarSongModel(int startPoint, SongModel songInfo)
         {
             StartPoint = startPoint;
             DateUsed = DateTime.Now;
+            SongInfo = songInfo;
         }
     }
 }
