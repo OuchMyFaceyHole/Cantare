@@ -25,6 +25,7 @@ namespace SwiftTrueRandom.Database
                 .WithOne()
                 .IsRequired();
 
+            modelBuilder.Entity<CalendarSongModel>().Navigation(nav => nav.SongInfo).AutoInclude();
 
             base.OnModelCreating(modelBuilder);
         }

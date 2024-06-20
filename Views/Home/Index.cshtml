@@ -2,51 +2,81 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="container text-center">
-    <div class="col">
-        <div class="row">
+<div class="container-fluid text-center" style="max-width: 45rem">
+    <div class="row">
             <div class="container-fluid">
-                <div class="col">
-                    <div class="row">
-                        <button class="btn btn-primary" id="PlayButton">Play</button>
+                <div class="row justify-content-center" style="margin: 0.5rem">
+                <button class="btn btn-primary" id="PlayButton" style="max-width:8rem">Play</button>
+                </div>
+                <div class="row progress" style="margin: 0.5rem">
+                    <div id="PlayProgress" class="progress-bar progress-bar-striped progress-bar-animated"
+                        style="width: 0%">
                     </div>
-                    <div class="row">
-                        <div id="PlayProgress" class="progress-bar progress-bar-striped progress-bar-animated">
-                        </div>
-                    </div>
+                </div>
+                <div class="row justify-content-center" style="margin: 0.5rem">
+                    <button class="btn btn-outline-secondary" id="SkipButton" style="max-width:5rem">Skip</button>
                 </div>
             </div>
         </div>
-        <div class="row" style="padding-top: 50px">
-            <div class="container-fluid">
-                <div class="col">
-                    <div class="row">
-                        <p id="guess" hidden></p>
-                        <div class="input-group">
-                            <input type="text" class="form-control" />
-                            <button type="button" class="btn btn-secondary">Submit</button>
-                        </div>
+    <div class="row">
+        <div id="GuessContainer" class="container-fluid" style="padding: 0">
+            <div class="row rounded" style="margin: 0.5rem">
+                <div class="col d-flex justify-content-center align-items-center" style="padding: 0">
+                    <p class="text-md-center fw-bold fs-5 align-middle" hidden style="margin: 1rem"></p>
+                    <div id="SongInputGroup" class="input-group">
+                        <input type="text" id="SongInput" class="form-control AutoCompleteInput" />
+                        <button type="button" class="btn btn-secondary" id="SubmitButton">Submit</button>
                     </div>
-                    <div class="row" style="background-color: dimgrey; padding-bottom: 15px">
-                        <p id="guess"></p>
-                    </div>
-                    <div class="row" style="background-color: dimgrey; padding-bottom: 15px">
-                        <p id="guess"> </p>
-                    </div>
-                    <div class="row" style="background-color: dimgrey; padding-bottom: 15px">
-                        <p id="guess"> </p>
-                    </div>
-                    <div class="row" style="background-color: dimgrey; padding-bottom: 15px">
-                        <p id="guess"> </p>
-                    </div>
-                    <div class="row" style="background-color: dimgrey; padding-bottom: 15px">
-                        <p id="guess"> </p>
-                    </div>
+                </div>
+            </div>
+            <div class="row rounded" style="background-color: dimgrey; margin: 0.5rem">
+                <div class="col d-flex justify-content-center align-items-center" style="padding: 0">
+                    <p class="text-md-center fw-bold fs-5 align-middle" style="margin: 1rem"></p>
+                </div>
+            </div>
+            <div class="row rounded" style="background-color: dimgrey; margin: 0.5rem">
+                <div class="col d-flex justify-content-center align-items-center" style="padding: 0">
+                    <p class="text-md-center fw-bold fs-5 align-middle" style="margin: 1rem"></p>
+                </div>
+            </div>
+            <div class="row rounded" style="background-color: dimgrey; margin: 0.5rem">
+                <div class="col d-flex justify-content-center align-items-center" style="padding: 0">
+                    <p class="text-md-center fw-bold fs-5 align-middle" style="margin: 1rem"></p>
+                </div>
+            </div>
+            <div class="row rounded" style="background-color: dimgrey; margin: 0.5rem">
+                <div class="col d-flex justify-content-center align-items-center" style="padding: 0">
+                    <p class="text-md-center fw-bold fs-5 align-middle" style="margin: 1rem"></p>
+                </div>
+            </div>
+            <div class="row rounded" style="background-color: dimgrey; margin: 0.5rem">
+                <div class="col d-flex justify-content-center align-items-center" style="padding: 0">
+                    <p class="text-md-center fw-bold fs-5 align-middle" style="margin: 1rem"></p>
+                </div>
+             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Calendar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer container-fluid" id="modalFooter">
+                <div class="row justify-content-center">
+                    <nav>
+                        <ul class="pagination">
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
     </div>
-    
 </div>
 
 <script type="text/javascript" src="~/js/index.js"></script>

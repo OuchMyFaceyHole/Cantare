@@ -5,6 +5,8 @@
         Correct,
         WrongVersion,
         WrongSongSameAlbum,
-        Wrong
+        WrongSongSameArtist,
+        Wrong,
+        Skipped
     }
 }

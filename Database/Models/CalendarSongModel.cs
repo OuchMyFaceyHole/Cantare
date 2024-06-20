@@ -18,7 +18,7 @@ namespace SwiftTrueRandom.Database.Models
         public CalendarSongModel(int startPoint, SongModel songInfo)
         {
             StartPoint = startPoint;
-            DateUsed = DateTime.Now;
+            DateUsed = DateTime.Now.Date;
             SongInfo = songInfo;
         }
     }
