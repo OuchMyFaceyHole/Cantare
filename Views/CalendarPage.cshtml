@@ -1,0 +1,23 @@
+﻿@inject SwiftTrueRandom.Database.BackendDatabase backendDatabase;
+@model int
+@{
+    var calendarResults = backendDatabase.SongCalender.OrderByDescending(song => song.DateUsed).Skip((9 * Model) + 0).Take(9).Select(song => song.DateUsed);
+}
+
+<div id="CalendarPage-@Model" class="row row-cols-3">
+    @foreach (var result in calendarResults)
+    {
+        var date = @result.ToShortDateString();
+        <div class="col">
+            <button class="btn btn-outline-secondary card" type="button">
+                <div class="rounded" style="overflow:hidden">
+                    <img src="/GetSongImageData?date=@(date.Replace('/', '-'))" class="card-img-top"
+                         style="filter: blur(10px);-webkit-filter: blur(10px);" />
+                </div>
+                <div class="card-body" style="padding: 0.375rem; padding-bottom: 0">
+                    <h5 class="card-title">@date</h5>
+                </div>
+            </button>
+        </div>
+    }
+</div>

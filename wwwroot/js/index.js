@@ -13,7 +13,7 @@ let audioContext = new AudioContext();
 let gainSetter = null;
 let isPlaying = false;
 $(document).ready(async function () {
-    audioData = await (await fetch('/GetSongData')).arrayBuffer();
+    audioData = await (await fetch('/GetSongAudioData')).arrayBuffer();
     
     gainSetter = audioContext.createGain();
     gainSetter.gain.value = 0.25;
@@ -94,10 +94,9 @@ $(document).ready(async function () {
             $.ajax({
                 url: '/GetCalendarData',
                 type: 'GET',
+                data: {page: 0},
                 success: function (data) {
-                    $.each(data, function (dateData, index) {
-                        //dateData.
-                    });
+                    document.getElementById("Calendar").innerHTML = data;
                 }
             });
         }

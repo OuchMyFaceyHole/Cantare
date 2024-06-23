@@ -17,6 +17,8 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSingleton<SongSelectionService>();
 
+builder.Services.AddTransient<SwiftTrueRandom.Helpers.HTMLGenerator>(); 
+
 var connectionString = builder.Configuration.GetConnectionString("BackendDatabase");
 builder.Services.AddDbContext<BackendDatabase>(dbContextOptions =>
     dbContextOptions.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));

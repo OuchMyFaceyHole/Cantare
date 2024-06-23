@@ -11,6 +11,8 @@ namespace SwiftTrueRandom.Database
 
         public DbSet<CalendarSongModel> SongCalender { get; set; }
 
+        public DbSet<SongImageModel> SongImages { get; set; }   
+
         public DbSet<UserModel> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SwiftTrueRandom.Database;
 using SwiftTrueRandom.Database.Models;
@@ -8,6 +6,7 @@ using SwiftTrueRandom.Database.Services;
 using SwiftTrueRandom.Models;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using SwiftTrueRandom.Helpers;
 
 namespace SwiftTrueRandom.Controllers
 {
@@ -18,10 +17,13 @@ namespace SwiftTrueRandom.Controllers
 
         private readonly BackendDatabase backendDatabase;
 
-        public HomeController(SongSelectionService songSelectionService, BackendDatabase backendDatabase)
+        private readonly HTMLGenerator htmlGenerator;
+
+        public HomeController(SongSelectionService songSelectionService, BackendDatabase backendDatabase, HTMLGenerator htmlGenerator)
         {
            this.songSelectionService = songSelectionService;
            this.backendDatabase = backendDatabase;
+           this.htmlGenerator = htmlGenerator;
         }
 
         
@@ -41,20 +43,41 @@ namespace SwiftTrueRandom.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        [HttpGet("GetSongData")]
-        public IActionResult GetSongData()
+        [HttpGet("GetSongAudioData")]
+        public async Task<IActionResult> GetSongAudioData(string date = "")
         {
-            var todaysSongData = songSelectionService.TodaysSongData.First();
+            if (date == "")
+            {
+                return File(songSelectionService.TodaysSongData.First(), "audio/mpeg");
+            }
+            else
+            {
+                var calendarData = await backendDatabase.SongCalender.FirstAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
+                return File((await songSelectionService.GenerateSongSnippet(calendarData.SongInfo, calendarData.StartPoint)).songData, "audio/mpeg");
+            }
+            
+        }
 
-            return File(todaysSongData, "audio/mpeg");
+        [HttpGet("GetSongImageData")]
+        public async Task<IActionResult> GetSongImageData(string date = "")
+        {
+            if (date == "")
+            {
+                return File(songSelectionService.TodaysSongData.First(), "image/jpeg");
+            }
+            else
+            {
+                var calendarData = await backendDatabase.SongCalender.Include(song => song.SongInfo.SongImage).FirstAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
+                return File(calendarData.SongInfo.SongImage.ImageData, "image/jpeg");
+            }
         }
 
         [HttpPost("SongGuess")]
-        public IActionResult SongGuess(string songGuess)
+        public async Task<IActionResult> SongGuess(string songGuess)
         {
             var guessStatus = GuessEnumeration.Wrong;
             var songData = songGuess.Split('/');
-            var todaysSong = backendDatabase.SongCalender.First(sng => sng.DateUsed == DateTime.Now.Date);
+            var todaysSong = await backendDatabase.SongCalender.FirstAsync(sng => sng.DateUsed == DateTime.Now.Date);
 
             if (todaysSong.SongInfo.Artist == songData[0])
             {
@@ -100,6 +123,11 @@ namespace SwiftTrueRandom.Controllers
 
            return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(songs));
         }
-            
+
+        [HttpGet("GetCalendarData")]
+        public async Task<IActionResult> GetCalendarData(int page)
+        {
+            return Ok(await htmlGenerator.GenerateHTML(HttpContext, "/Views/CalendarPage.cshtml", page));
+        }
     }
 }

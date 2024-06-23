@@ -19,11 +19,13 @@ namespace SwiftTrueRandom.Database.Models
 
         public int AudioStreamIndex { get; set; } = int.MinValue;
 
+        public SongImageModel SongImage { get; set; }
+
         public bool IsEnabled { get; set; } = true;
 
         public SongModel() { }
 
-        public SongModel(string artist, string albumTitle, string songTitle, string songPath, int songLength, int audioStreamIndex)
+        public SongModel(string artist, string albumTitle, string songTitle, string songPath, int songLength, int audioStreamIndex, SongImageModel songImage)
         {
             Artist = artist;
             AlbumTitle = albumTitle;
@@ -31,6 +33,7 @@ namespace SwiftTrueRandom.Database.Models
             SongPath = songPath;
             SongLength = songLength;
             AudioStreamIndex = audioStreamIndex;
+            SongImage = songImage;
         }
     }
 }

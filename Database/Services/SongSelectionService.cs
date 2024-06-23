@@ -8,6 +8,7 @@ using SwiftTrueRandom.Database.Models;
 using SwiftTrueRandom.Models;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace SwiftTrueRandom.Database.Services
 {
@@ -76,24 +77,49 @@ namespace SwiftTrueRandom.Database.Services
 
         public async Task RefreshSongs(BackendDatabase backendDatabase)
         {
-            foreach (var songPath in SongPaths)
+            await foreach (var songPath in SongPaths.ToAsyncEnumerable())
             {
                 if (File.Exists(songPath))
                 {
-                    if (!await backendDatabase.AvailableSongs.AnyAsync(song => song.SongPath == songPath))
+                    var songData = await backendDatabase.AvailableSongs.FirstOrDefaultAsync(song => song.SongPath == songPath);
+                    if (songData == default)
                     {
                         var metaData = FFProbe.Analyse(songPath);
                         var songTags = metaData.Format.Tags;
                         try
                         {
+                            var imageData = new MemoryStream();
+                            await FFMpegArguments.FromFileInput(songPath).OutputToPipe(new StreamPipeSink(imageData), options =>
+                            {
+                                options.ForceFormat("mjpeg");
+                                options.SelectStream(metaData.PrimaryVideoStream.Index);
+                                options.WithFrameOutputCount(1);
+                                options.WithCustomArgument("-an");
+                            }).ProcessAsynchronously();
+                            var byteData = imageData.ToArray();
+                            var existingImageData = await backendDatabase.SongImages.FirstOrDefaultAsync(song => song.ImageData.SequenceEqual(byteData));
+                            if (existingImageData == default)
+                            {
+                                existingImageData = backendDatabase.SongImages.Local.FirstOrDefault(song => song.ImageData.SequenceEqual(byteData));
+                                if (existingImageData == default)
+                                {
+                                    existingImageData = new SongImageModel(byteData);
+                                    backendDatabase.SongImages.Local.Add(existingImageData);
+                                }
+                            }
+
                             var artist = songTags.ContainsKey("album_artist") ? songTags["album_artist"] : songTags["artist"];
                             await backendDatabase.AvailableSongs.AddAsync(new Models.SongModel(
                                 artist.Trim(), songTags["album"].Trim(), songTags["title"].Trim(), songPath, 
-                                (int)metaData.Duration.TotalSeconds, metaData.PrimaryAudioStream.Index));;
+                                (int)metaData.Duration.TotalSeconds, metaData.PrimaryAudioStream.Index, existingImageData));;
                         }
                         catch (KeyNotFoundException)
                         {
                             //Need to log missing required metadata
+                        }
+                        catch (NullReferenceException)
+                        {
+                            //Need to log missing stream data
                         }
                     }
                 }

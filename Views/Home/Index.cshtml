@@ -1,5 +1,7 @@
-﻿@{
+﻿@inject SwiftTrueRandom.Database.BackendDatabase backendDatabase;
+@{
     ViewData["Title"] = "Home Page";
+    var pageStart = (backendDatabase.SongCalender.Count() / 9) + 1;
 }
 
 <div class="container-fluid text-center" style="max-width: 45rem">
@@ -61,16 +63,28 @@
 <div class="modal fade" id="modal">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" style="padding: 0.5rem 1rem 0.5rem 1rem">
                 <h5 class="modal-title">Calendar</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <div id="Calendar" class="container-fluid">
+
+                </div>
             </div>
             <div class="modal-footer container-fluid" id="modalFooter">
                 <div class="row justify-content-center">
                     <nav>
-                        <ul class="pagination">
+                        <ul class="pagination" style="margin: 0">
+                            <li class="page-item"><a class="page-link" href="#">Previous</a></li>
+                            <li class="page-item active" aria-current="page">
+                                <a class="page-link" href="#">1</a>
+                            </li>
+                            @for (var i = 2; i <= pageStart; i++)
+                            {
+                                <li class="page-item"><a class="page-link" href="#">@i</a></li>
+                            }
+                            <li class="page-item"><a class="page-link" href="#">Next</a></li>
                         </ul>
                     </nav>
                 </div>
