@@ -20,10 +20,6 @@ namespace SwiftTrueRandom.Database.Services
 
         private readonly string SongConfigPath = "";
 
-        private const uint byteRate = 176400;
-
-        private const uint bytesToCopy = 1058400;
-
         public ConcurrentBag<byte[]> TodaysSongData { get; private set; } = new ConcurrentBag<byte[]>();
 
         public SongSelectionService(IServiceScopeFactory scopeFactory, IConfiguration configuration)
@@ -40,12 +36,10 @@ namespace SwiftTrueRandom.Database.Services
             var todaysSong = backendDatabase.SongCalender.FirstOrDefault(song => song.DateUsed.Date == DateTime.Now.Date);
             if (todaysSong != default)
             {
-                TodaysSongData.Clear();
                 TodaysSongData.Add(GenerateSongSnippet(todaysSong.SongInfo, todaysSong.StartPoint).Result.songData);
             }
             else
             {
-                TodaysSongData.Clear();
                 GenerateTodaysSong().Wait();
             }
         }

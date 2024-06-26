@@ -32,10 +32,6 @@ namespace SwiftTrueRandom.Controllers
             return View();
         }
         
-        public IActionResult Privacy()
-        {
-            return View();
-        }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
@@ -128,6 +124,12 @@ namespace SwiftTrueRandom.Controllers
         public async Task<IActionResult> GetCalendarData(int page)
         {
             return Ok(await htmlGenerator.GenerateHTML(HttpContext, "/Views/CalendarPage.cshtml", page));
+        }
+
+        [HttpGet("GetPlayingArea")]
+        public async Task<IActionResult> GetPlayingArea(string date)
+        {
+            return Ok(await htmlGenerator.GenerateHTML(HttpContext, "/Views/Home/PlayingAreaPartial.cshtml", DateTime.Parse(date)));
         }
     }
 }

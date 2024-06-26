@@ -13,6 +13,7 @@ let audioContext = new AudioContext();
 let gainSetter = null;
 let isPlaying = false;
 $(document).ready(async function () {
+    const modal = new bootstrap.Modal(document.getElementById("modal"));
     audioData = await (await fetch('/GetSongAudioData')).arrayBuffer();
     
     gainSetter = audioContext.createGain();
@@ -87,18 +88,33 @@ $(document).ready(async function () {
                 songInputGroup.hidden = true;
             }
         }
-    });
-    const modal = document.getElementById("modal");
-    modal.addEventListener('show.bs.modal', event => {
-        if (event.relatedTarget.getAttribute('data-type') == 'calendar') {
+        else if (event.target.id === "CalendarSelect") {
+            let date = event.target.dataset.date;
             $.ajax({
-                url: '/GetCalendarData',
+                url: '/GetPlayingArea',
                 type: 'GET',
-                data: {page: 0},
-                success: function (data) {
-                    document.getElementById("Calendar").innerHTML = data;
+                data: { date: date },
+                success: async function (data) {
+                    modal.toggle();
+                    audioData = await (await fetch('/GetSongAudioData?' + new URLSearchParams({ date: date }))).arrayBuffer();
+                    document.getElementById("PlayingArea").remove();
+                    let main = document.getElementsByClassName("pb-3")[0];
+                    main.innerHTML = data + main.innerHTML;
                 }
-            });
+            })
+        }
+        else if (event.target.id === "CloseModal" || event.target.id === "OpenCalendar") {
+            if (event.target.dataset.type == 'calendar') {
+                $.ajax({
+                    url: '/GetCalendarData',
+                    type: 'GET',
+                    data: { page: 0 },
+                    success: function (data) {
+                        document.getElementById("Calendar").innerHTML = data;
+                    }
+                });
+            }
+            modal.toggle();
         }
     });
 });
