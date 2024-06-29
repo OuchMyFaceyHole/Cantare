@@ -1,4 +1,4 @@
-﻿@inject SwiftTrueRandom.Database.BackendDatabase backendDatabase;
+﻿@inject Cantare.Database.BackendDatabase backendDatabase;
 @model int
 @{
     var calendarResults = backendDatabase.SongCalender.OrderByDescending(song => song.DateUsed).Skip((9 * Model) + 0).Take(9).Select(song => song.DateUsed);

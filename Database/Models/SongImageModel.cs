@@ -1,4 +1,4 @@
-﻿namespace SwiftTrueRandom.Database.Models
+﻿namespace Cantare.Database.Models
 {
     public class SongImageModel
     {

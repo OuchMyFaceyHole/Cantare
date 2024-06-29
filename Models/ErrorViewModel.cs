@@ -1,4 +1,4 @@
-namespace SwiftTrueRandom.Models
+namespace Cantare.Models
 {
     public class ErrorViewModel
     {

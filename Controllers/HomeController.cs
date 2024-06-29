@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SwiftTrueRandom.Database;
-using SwiftTrueRandom.Database.Models;
-using SwiftTrueRandom.Database.Services;
-using SwiftTrueRandom.Models;
+using Cantare.Database;
+using Cantare.Database.Models;
+using Cantare.Database.Services;
+using Cantare.Models;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using SwiftTrueRandom.Helpers;
+using Cantare.Helpers;
 
-namespace SwiftTrueRandom.Controllers
+namespace Cantare.Controllers
 {
     [Authorize]
     public class HomeController : Controller

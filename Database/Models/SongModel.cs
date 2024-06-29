@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SwiftTrueRandom.Database.Models
+namespace Cantare.Database.Models
 {
     public class SongModel
     {

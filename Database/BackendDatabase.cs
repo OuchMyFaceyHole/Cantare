@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SwiftTrueRandom.Database.Models;
+using Cantare.Database.Models;
 
-namespace SwiftTrueRandom.Database
+namespace Cantare.Database
 {
     public class BackendDatabase : DbContext
     {

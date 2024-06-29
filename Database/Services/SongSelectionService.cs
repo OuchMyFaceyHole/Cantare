@@ -4,13 +4,13 @@ using FFMpegCore.Pipes;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
-using SwiftTrueRandom.Database.Models;
-using SwiftTrueRandom.Models;
+using Cantare.Database.Models;
+using Cantare.Models;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Linq;
 
-namespace SwiftTrueRandom.Database.Services
+namespace Cantare.Database.Services
 {
     public class SongSelectionService
     {

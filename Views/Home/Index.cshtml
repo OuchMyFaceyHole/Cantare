@@ -1,6 +1,5 @@
-﻿@inject SwiftTrueRandom.Database.BackendDatabase backendDatabase;
+﻿@inject Cantare.Database.BackendDatabase backendDatabase;
 @{
-    ViewData["Title"] = "Home Page";
     var pageStart = (backendDatabase.SongCalender.Count() / 9) + 1;
 }
 

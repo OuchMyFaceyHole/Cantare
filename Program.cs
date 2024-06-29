@@ -2,8 +2,8 @@ using FFMpegCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.EntityFrameworkCore;
-using SwiftTrueRandom.Database;
-using SwiftTrueRandom.Database.Services;
+using Cantare.Database;
+using Cantare.Database.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +17,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSingleton<SongSelectionService>();
 
-builder.Services.AddTransient<SwiftTrueRandom.Helpers.HTMLGenerator>(); 
+builder.Services.AddTransient<Cantare.Helpers.HTMLGenerator>(); 
 
 var connectionString = builder.Configuration.GetConnectionString("BackendDatabase");
 builder.Services.AddDbContext<BackendDatabase>(dbContextOptions =>
