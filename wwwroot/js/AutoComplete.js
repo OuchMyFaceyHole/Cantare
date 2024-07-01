@@ -1,12 +1,10 @@
 ﻿var workingSet = [];
 var currentActiveElement = null;
 var currentActiveIndex = -1;
-var currentlySelectedInput = null;
 var openAutoCompleteList = [];
 var openAutoCompleteListContainer = null;
 
 $(document).ready(function () {
-    currentlySelectedInput = document.getElementById("SongInput");
     document.addEventListener('input', function (event) {
         if (event.target.classList.contains("AutoCompleteInput")) {
             let url = '/GetSongNames';
@@ -35,13 +33,14 @@ $(document).ready(function () {
     });
     document.addEventListener('click', function (event) {
         if (event.target.classList.contains("AutoCompleteListItem")) {
-            currentlySelectedInput.value = event.target.querySelectorAll('input')[0].dataset.visualValue;
-            currentlySelectedInput.dataset.trueValue = event.target.querySelectorAll('input')[0].value;
+            var songInput = document.getElementById("SongInput");
+            songInput.value = event.target.querySelectorAll('input')[0].dataset.visualValue;
+            songInput.dataset.trueValue = event.target.querySelectorAll('input')[0].value;
             CloseAllLists();
         }
     });
     document.addEventListener('keydown', function (event) {
-        if (currentlySelectedInput) {
+        if (document.getElementById("SongInput")) {
             if (event.keyCode == 40) {
                 /*If the arrow DOWN key is pressed,
                 increase the currentFocus variable:*/

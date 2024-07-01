@@ -1,6 +1,11 @@
 ﻿@inject Cantare.Database.BackendDatabase backendDatabase;
 @{
-    var pageStart = (backendDatabase.SongCalender.Count() / 9) + 1;
+    var songCount = backendDatabase.SongCalender.Count();
+    var pageStart = (songCount / 6);
+    if (pageStart > 1)
+    {
+        pageStart = pageStart + (songCount % 6 > 0 ? 1 : 0);
+    }
 }
 
 <partial name="PlayingAreaPartial.cshtml" model="@DateTime.Now" />
@@ -12,21 +17,19 @@
                 <h5 class="modal-title">Calendar</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div id="Calendar" class="container-fluid">
-                </div>
+            <div id="Calendar" class="modal-body">
             </div>
             <div class="modal-footer container-fluid" id="modalFooter">
                 <div class="row justify-content-center">
                     <nav>
                         <ul class="pagination" style="margin: 0">
                             <li class="page-item"><a class="page-link" href="#">Previous</a></li>
-                            <li class="page-item active" aria-current="page">
+                            <li id="PageSelect-1" class="page-item active" aria-current="page">
                                 <a class="page-link" href="#">1</a>
                             </li>
                             @for (var i = 2; i <= pageStart; i++)
                             {
-                                <li class="page-item"><a class="page-link" href="#">@i</a></li>
+                                <li id="PageSelect-@i" class="page-item"><a class="page-link" href="#">@i</a></li>
                             }
                             <li class="page-item"><a class="page-link" href="#">Next</a></li>
                         </ul>
@@ -37,4 +40,5 @@
     </div>
 </div>
 
+<span id="pageMax" hidden>@pageStart</span>
 <script type="text/javascript" src="~/js/index.js"></script>

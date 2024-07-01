@@ -32,7 +32,10 @@ namespace Cantare.Database.Services
 
             using var scope = scopeFactory.CreateScope();
             var backendDatabase = scope.ServiceProvider.GetRequiredService<BackendDatabase>();
-            RefreshSongs(backendDatabase).Wait();
+            if (backendDatabase.AvailableSongs.Count() == 0)
+            {
+                RefreshSongs(backendDatabase).Wait();
+            }
             var todaysSong = backendDatabase.SongCalender.FirstOrDefault(song => song.DateUsed.Date == DateTime.Now.Date);
             if (todaysSong != default)
             {

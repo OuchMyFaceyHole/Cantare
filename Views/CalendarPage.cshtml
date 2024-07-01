@@ -1,23 +1,32 @@
 ﻿@inject Cantare.Database.BackendDatabase backendDatabase;
 @model int
 @{
-    var calendarResults = backendDatabase.SongCalender.OrderByDescending(song => song.DateUsed).Skip((9 * Model) + 0).Take(9).Select(song => song.DateUsed);
+    var calendarResults = backendDatabase.SongCalender.OrderByDescending(song => song.DateUsed).Skip((6 * Model) + 1).Take(6).Select(song => song.DateUsed);
+    var totalSongs = calendarResults.Count();
+    var rowCount = totalSongs / 3 + (totalSongs % 3 > 0 ? 1 : 0);
+    var songCount = 0;
 }
 
-<div id="CalendarPage-@Model" class="row row-cols-3">
-    @foreach (var result in calendarResults)
+<div id="CalendarPage-@Model" class="container-fluid">
+    @for (var i = 0; i < rowCount; i++)
     {
-        var date = @result.ToShortDateString();
-        <div class="col">
-            <button id="CalendarSelect" data-date="@(date.Replace('/', '-'))" class="btn btn-outline-secondary card" type="button">
-                <div class="rounded" style="overflow:hidden;pointer-events: none">
-                    <img src="/GetSongImageData?date=@(date.Replace('/', '-'))" class="card-img-top"
-                         style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none" />
+        <div class="row row-cols-3" @(i != (rowCount - 1) ? "style=margin-bottom:1rem" : "")>
+            @for (var j = songCount; songCount < (j + 3) && songCount < totalSongs; songCount++)
+            {
+                var result = calendarResults.ElementAt(songCount);
+                var date = @result.ToShortDateString();
+                <div class="col">
+                    <button id="CalendarSelect" data-date="@(date.Replace('/', '-'))" class="btn btn-outline-secondary card" type="button">
+                        <div class="rounded" style="overflow:hidden;pointer-events: none">
+                            <img src="/GetSongImageData?date=@(date.Replace('/', '-'))" class="card-img-top"
+                                 style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none" />
+                        </div>
+                        <div class="card-body" style="padding: 0.375rem; padding-bottom: 0;pointer-events: none">
+                            <h5 class="card-title">@date</h5>
+                        </div>
+                    </button>
                 </div>
-                <div class="card-body" style="padding: 0.375rem; padding-bottom: 0;pointer-events: none">
-                    <h5 class="card-title">@date</h5>
-                </div>
-            </button>
+            }
         </div>
     }
-</div>
+</div> 

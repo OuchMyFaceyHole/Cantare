@@ -12,6 +12,8 @@ let audioData = null;
 let audioContext = new AudioContext();
 let gainSetter = null;
 let isPlaying = false;
+let currentCalendarPage = 1;
+let calendarPageMax = 0;
 $(document).ready(async function () {
     const modal = new bootstrap.Modal(document.getElementById("modal"));
     audioData = await (await fetch('/GetSongAudioData')).arrayBuffer();
@@ -21,6 +23,7 @@ $(document).ready(async function () {
     var progressBar = document.getElementById("PlayProgress");
     var songInputGroup = document.getElementById("SongInputGroup");
     var guessContainer = document.getElementById("GuessContainer");
+    calendarPageMax = parseInt(document.getElementById("pageMax").innerHTML);
     document.addEventListener('click', async function (event) {
         if (event.target.id === "PlayButton" && !isPlaying) {
             await PlaySong();
@@ -100,21 +103,45 @@ $(document).ready(async function () {
                     document.getElementById("PlayingArea").remove();
                     let main = document.getElementsByClassName("pb-3")[0];
                     main.innerHTML = data + main.innerHTML;
+                    progressBar = document.getElementById("PlayProgress");
+                    songInputGroup = document.getElementById("SongInputGroup");
+                    guessContainer = document.getElementById("GuessContainer");
+                    guessCount = 1;
                 }
             })
         }
         else if (event.target.id === "CloseModal" || event.target.id === "OpenCalendar") {
             if (event.target.dataset.type == 'calendar') {
-                $.ajax({
-                    url: '/GetCalendarData',
-                    type: 'GET',
-                    data: { page: 0 },
-                    success: function (data) {
-                        document.getElementById("Calendar").innerHTML = data;
-                    }
-                });
+                GetCalendarData();
             }
             modal.toggle();
+        }
+        else if (event.target.classList.contains("page-link")) {
+            var innerData = event.target.innerHTML;
+            if (innerData === "Previous") {
+                if (currentCalendarPage > 1) {
+                    document.getElementById("PageSelect-" + currentCalendarPage).classList.remove("active");
+                    currentCalendarPage--;
+                    document.getElementById("PageSelect-" + currentCalendarPage).classList.add("active");
+                    GetCalendarData();
+                }
+            }
+            else if (innerData === "Next") {
+                if (currentCalendarPage < calendarPageMax) {
+                    document.getElementById("PageSelect-" + currentCalendarPage).classList.remove("active");
+                    currentCalendarPage++;
+                    document.getElementById("PageSelect-" + currentCalendarPage).classList.add("active");
+                    GetCalendarData();
+                }
+            }
+            else {
+                if (parseInt(innerData) !== currentCalendarPage) {
+                    document.getElementById("PageSelect-" + currentCalendarPage).classList.remove("active");
+                    currentCalendarPage = parseInt(event.target.innerHTML);
+                    document.getElementById("PageSelect-" + currentCalendarPage).classList.add("active");
+                    GetCalendarData();
+                }
+            }
         }
     });
 });
@@ -128,6 +155,17 @@ function ElementError(element) {
         element.style.outlineColor = "";
         element.style.outlineStyle = "";
     }, 500);
+}
+
+function GetCalendarData() {
+    $.ajax({
+        url: '/GetCalendarData',
+        type: 'GET',
+        data: { page: (currentCalendarPage - 1) },
+        success: function (data) {
+            document.getElementById("Calendar").innerHTML = data;
+        }
+    });
 }
 
 async function PlaySong() {
