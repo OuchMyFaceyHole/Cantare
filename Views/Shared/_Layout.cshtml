@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@inject UserManager<Cantare.Database.Models.UserModel> userManager
+@using Microsoft.AspNetCore.Identity
+@{
+    var userData = await userManager.GetUserAsync(User);
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -15,7 +20,7 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container-fluid">
-                <a class="navbar-brand text-nowrap" href="#">Cantare</a>
+                <a class="navbar-brand text-nowrap" asp-area="" asp-controller="Home" asp-action="Index">Cantare</a>
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a role="button" id="OpenCalendar" class="nav-link active" data-type="calendar">
@@ -24,6 +29,14 @@
                                 <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
                             </svg>
                         </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav justify-content-end">
+                    <li class="nav-item">
+                        @if (userData != null)
+                        {
+                            <span class="navbar-text">Hello @userData.UserName</span>
+                        }
                     </li>
                 </ul>
             </div>

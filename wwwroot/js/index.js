@@ -14,31 +14,44 @@ let gainSetter = null;
 let isPlaying = false;
 let currentCalendarPage = 1;
 let calendarPageMax = 0;
+let isLoggedIn = false;
+let songDate = "";
+let guessContainer = null;
+let songInput = null;
 $(document).ready(async function () {
     const modal = new bootstrap.Modal(document.getElementById("modal"));
     audioData = await (await fetch('/GetSongAudioData')).arrayBuffer();
-    
+
     gainSetter = audioContext.createGain();
     gainSetter.gain.value = 0.25;
     var progressBar = document.getElementById("PlayProgress");
     var songInputGroup = document.getElementById("SongInputGroup");
-    var guessContainer = document.getElementById("GuessContainer");
+    songInput = document.getElementById("SongInput");
+    songInput.innerHTML = "";
+    songInput.value = "";
+    guessContainer = document.getElementById("GuessContainer");
     calendarPageMax = parseInt(document.getElementById("pageMax").innerHTML);
+    songDate = document.getElementById("SongDate").innerHTML;
+    LoadGuessData();
     document.addEventListener('click', async function (event) {
         if (event.target.id === "PlayButton" && !isPlaying) {
             await PlaySong();
         }
         else if (event.target.id === "SubmitButton") {
-            let songInput = document.getElementById("SongInput");
             if (workingSet.includes(songInput.dataset.trueValue)) {
                 $.ajax({
                     url: '/SongGuess',
                     type: 'POST',
-                    data: { songGuess: songInput.dataset.trueValue },
+                    data: {
+                        songDate: document.getElementById("SongDate").innerHTML,
+                        songGuess: songInput.dataset.trueValue,
+                        guessCount: guessCount
+                    },
                     success: async function (data) {
-                        if (data != 0) {
+                        let resultData = JSON.parse(data);
+                        if (resultData.GuessResult != 0) {
                             var currentGuessRow = guessContainer.children[guessCount - 1];
-                            currentGuessRow.style.backgroundColor = enumValToColor[data];
+                            currentGuessRow.style.backgroundColor = enumValToColor[resultData.GuessResult];
                             currentGuessRow.firstElementChild.firstElementChild.innerHTML = songInput.value;
                             currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
                             currentGuessRow.firstElementChild.firstElementChild.hidden = false;
@@ -56,7 +69,7 @@ $(document).ready(async function () {
                         }
                         else {
                             var currentGuessRow = guessContainer.children[guessCount - 1];
-                            currentGuessRow.style.backgroundColor = enumValToColor[data];
+                            currentGuessRow.style.backgroundColor = enumValToColor[resultData.GuessResult];
                             currentGuessRow.firstElementChild.firstElementChild.innerHTML = songInput.value;
                             currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
                             currentGuessRow.firstElementChild.firstElementChild.hidden = false;
@@ -89,6 +102,9 @@ $(document).ready(async function () {
             }
             else {
                 songInputGroup.hidden = true;
+            }
+            if (!isLoggedIn) {
+                document.cookie = resultData.SongDate + "*" + resultData.GuessCount + "=" + "Skipped";
             }
         }
         else if (event.target.id === "CalendarSelect") {
@@ -166,6 +182,34 @@ function GetCalendarData() {
             document.getElementById("Calendar").innerHTML = data;
         }
     });
+}
+
+function LoadGuessData() {
+    if (isLoggedIn) {
+
+    }
+    else {
+        let todaysGuesses = document.cookie.split(';').filter(val => val.includes(songDate));
+        if (todaysGuesses.length > 0) {
+            for (let i = 0; i < todaysGuesses.length; i++) {
+                let currentGuessRow = guessContainer.children[i];
+                let guess = todaysGuesses.find(val => val.includes(songDate + "*" + (i + 1))).split('=')[1];
+                if (guess === 'Skipped') {
+                    currentGuessRow.style.backgroundColor = enumValToColor[5];
+                    currentGuessRow.firstElementChild.firstElementChild.innerHTML = guess;
+                }
+                else {
+                    guess = JSON.parse(guess);
+                    let guessData = guess.GuessData;
+                    currentGuessRow.style.backgroundColor = enumValToColor[guess.GuessResult];
+                    currentGuessRow.firstElementChild.firstElementChild.innerHTML =
+                        guessData.Artist + '-' + guessData.AlbumTitle + '-' + guessData.SongTitle;
+                }
+                currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
+                currentGuessRow.firstElementChild.firstElementChild.hidden = false;
+            }
+        }
+    }
 }
 
 async function PlaySong() {

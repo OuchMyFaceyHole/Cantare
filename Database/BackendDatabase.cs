@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Cantare.Database.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Cantare.Database
 {
-    public class BackendDatabase : DbContext
+    public class BackendDatabase : IdentityDbContext<UserModel>
     {
         public BackendDatabase(DbContextOptions<BackendDatabase> options) : base(options) { }
 
@@ -12,8 +13,6 @@ namespace Cantare.Database
         public DbSet<CalendarSongModel> SongCalender { get; set; }
 
         public DbSet<SongImageModel> SongImages { get; set; }   
-
-        public DbSet<UserModel> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

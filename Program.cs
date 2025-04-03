@@ -1,9 +1,9 @@
 using FFMpegCore;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Cantare.Database;
 using Cantare.Database.Services;
+using Cantare.Database.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,15 +23,46 @@ var connectionString = builder.Configuration.GetConnectionString("BackendDatabas
 builder.Services.AddDbContext<BackendDatabase>(dbContextOptions =>
     dbContextOptions.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-builder.Services.AddAuthentication(options => {
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
-}).AddCookie()
-    .AddGoogle(options =>
+builder.Services.AddDefaultIdentity<UserModel>(options =>
+    options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<BackendDatabase>();
+
+builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.ClientId = builder.Configuration.GetValue<string>("client_id");
-    options.ClientSecret = builder.Configuration.GetValue<string>("client_secret");
+    // Password settings.
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequiredUniqueChars = 0;
+
+    // Lockout settings.
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    // User settings.
+    options.User.AllowedUserNameCharacters =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+    options.User.RequireUniqueEmail = false;
 });
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    // Cookie settings
+    options.Cookie.HttpOnly = true;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+
+    options.LoginPath = "/Identity/Account/Login";
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    options.SlidingExpiration = true;
+});
+
+builder.Services.AddRazorPages();
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -52,8 +83,18 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.MapRazorPages();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+var backendDatabase = app.Services.GetRequiredService<BackendDatabase>();
+backendDatabase.Database.EnsureCreated();
+var migrations = backendDatabase.Database.GetPendingMigrations();
+if (migrations.Any())
+{
+    backendDatabase.Database.Migrate();
+}
 
 app.Run();

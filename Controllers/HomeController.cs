@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Cantare.Database;
 using Cantare.Database.Models;
 using Cantare.Database.Services;
@@ -7,6 +6,10 @@ using Cantare.Models;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Cantare.Helpers;
+using Newtonsoft.Json.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Cantare.Controllers
 {
@@ -19,20 +22,21 @@ namespace Cantare.Controllers
 
         private readonly HTMLGenerator htmlGenerator;
 
-        public HomeController(SongSelectionService songSelectionService, BackendDatabase backendDatabase, HTMLGenerator htmlGenerator)
+        private readonly IConfiguration configuration;
+
+        public HomeController(SongSelectionService songSelectionService, BackendDatabase backendDatabase, HTMLGenerator htmlGenerator , IConfiguration configuration)
         {
-           this.songSelectionService = songSelectionService;
-           this.backendDatabase = backendDatabase;
-           this.htmlGenerator = htmlGenerator;
+            this.songSelectionService = songSelectionService;
+            this.backendDatabase = backendDatabase;
+            this.htmlGenerator = htmlGenerator;
+            this.configuration = configuration;
         }
 
-        
         public IActionResult Index()
         {
             return View();
         }
         
-
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
@@ -67,19 +71,19 @@ namespace Cantare.Controllers
                 return File(calendarData.SongInfo.SongImage.ImageData, "image/jpeg");
             }
         }
-
+        
         [HttpPost("SongGuess")]
-        public async Task<IActionResult> SongGuess(string songGuess)
+        public async Task<IActionResult> SongGuess(string songDate, string songGuess, int guessCount)
         {
             var guessStatus = GuessEnumeration.Wrong;
             var songData = songGuess.Split('/');
-            var todaysSong = await backendDatabase.SongCalender.FirstAsync(sng => sng.DateUsed == DateTime.Now.Date);
+            var songToCheck = await backendDatabase.SongCalender.FirstAsync(sng => sng.DateUsed == DateTime.Parse(songDate));
 
-            if (todaysSong.SongInfo.Artist == songData[0])
+            if (songToCheck.SongInfo.Artist == songData[0])
             {
-                if (todaysSong.SongInfo.AlbumTitle == songData[1])
+                if (songToCheck.SongInfo.AlbumTitle == songData[1])
                 {
-                    if (todaysSong.SongInfo.SongTitle == songData[2])
+                    if (songToCheck.SongInfo.SongTitle == songData[2])
                     {
                         guessStatus = GuessEnumeration.Correct;
                     }
@@ -90,16 +94,16 @@ namespace Cantare.Controllers
                 }
                 else
                 {
-                    if (todaysSong.SongInfo.AlbumTitle.Length > songData[1].Length)
+                    if (songToCheck.SongInfo.AlbumTitle.Length > songData[1].Length)
                     {
-                        if (todaysSong.SongInfo.AlbumTitle.Contains(songData[1]))
+                        if (songToCheck.SongInfo.AlbumTitle.Contains(songData[1]))
                         {
                             guessStatus = GuessEnumeration.WrongVersion;
                         }
                     }
                     else 
                     {
-                        if (songData[1].Contains(todaysSong.SongInfo.AlbumTitle))
+                        if (songData[1].Contains(songToCheck.SongInfo.AlbumTitle))
                         {
                             guessStatus = GuessEnumeration.WrongVersion;
                         }
@@ -107,7 +111,14 @@ namespace Cantare.Controllers
                     guessStatus = GuessEnumeration.WrongSongSameArtist;
                 }
             }
-            return Ok(guessStatus);
+            var returnData = JObject.FromObject(new
+            {
+                GuessResult = guessStatus,
+                GuessCount = guessCount,
+                SongDate = songDate,
+                GuessData = songToCheck.SongInfo
+            });
+            return Ok(returnData.ToString());
         }
 
         [HttpGet("GetSongNames")]
@@ -131,5 +142,7 @@ namespace Cantare.Controllers
         {
             return Ok(await htmlGenerator.GenerateHTML(HttpContext, "/Views/Home/PlayingAreaPartial.cshtml", DateTime.Parse(date)));
         }
+
+        
     }
 }

@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 
 namespace Cantare.Database.Models
 {
-    public class UserModel
+    public class UserModel : IdentityUser
     {
         [Key]
         public int DatabaseKey { get; set; }
