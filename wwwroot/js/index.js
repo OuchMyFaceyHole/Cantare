@@ -153,8 +153,14 @@ $(document).ready(async function () {
                     main.innerHTML = data + main.innerHTML;
                     progressBar = document.getElementById("PlayProgress");
                     songInputGroup = document.getElementById("SongInputGroup");
+                    songInput = document.getElementById("SongInput");
+                    songInput.innerHTML = "";
+                    songInput.value = "";
                     guessContainer = document.getElementById("GuessContainer");
                     guessCount = 1;
+                    workingSet = [];
+                    document.getElementById("ShareButton").disabled = true;
+                    document.getElementById("SkipButton").disabled = false;
                 }
             })
         }
