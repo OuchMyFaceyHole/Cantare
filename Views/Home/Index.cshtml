@@ -1,17 +1,17 @@
 ﻿@inject Cantare.Database.BackendDatabase backendDatabase;
 @{
     var songCount = backendDatabase.SongCalender.Count();
-    var pageStart = (songCount / 6);
+    var pageStart = (songCount / 12);
     if (pageStart > 1)
     {
-        pageStart = pageStart + (songCount % 6 > 0 ? 1 : 0);
+        pageStart = pageStart + (songCount % 12 > 0 ? 1 : 0);
     }
 }
 
 <partial name="PlayingAreaPartial.cshtml" model="@DateTime.Now" />
 
 <div class="modal fade" id="modal">
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="max-width: 750px">
         <div class="modal-content">
             <div class="modal-header" style="padding: 0.5rem 1rem 0.5rem 1rem">
                 <h5 class="modal-title">Calendar</h5>

@@ -1,17 +1,17 @@
 ﻿@inject Cantare.Database.BackendDatabase backendDatabase;
 @model int
 @{
-    var calendarResults = backendDatabase.SongCalender.OrderByDescending(song => song.DateUsed).Skip((6 * Model) + 1).Take(6).Select(song => song.DateUsed);
+    var calendarResults = backendDatabase.SongCalender.OrderByDescending(song => song.DateUsed).Skip((12 * Model)).Take(12).Select(song => song.DateUsed);
     var totalSongs = calendarResults.Count();
-    var rowCount = totalSongs / 3 + (totalSongs % 3 > 0 ? 1 : 0);
+    var rowCount = totalSongs / 4 + (totalSongs % 4 > 0 ? 1 : 0);
     var songCount = 0;
 }
 
 <div id="CalendarPage-@Model" class="container-fluid">
     @for (var i = 0; i < rowCount; i++)
     {
-        <div class="row row-cols-3" @(i != (rowCount - 1) ? "style=margin-bottom:1rem" : "")>
-            @for (var j = songCount; songCount < (j + 3) && songCount < totalSongs; songCount++)
+        <div class="row row-cols-4" @(i != (rowCount - 1) ? "style=margin-bottom:1rem" : "")>
+            @for (var j = songCount; songCount < (j + 4) && songCount < totalSongs; songCount++)
             {
                 var result = calendarResults.ElementAt(songCount);
                 var date = @result.ToShortDateString();

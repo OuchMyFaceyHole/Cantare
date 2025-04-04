@@ -1,4 +1,5 @@
 ﻿let guessCount = 1;
+let guessResult = new Array(6);
 let enumValToColor = {
     0: "green",
     1: "orange",
@@ -7,6 +8,14 @@ let enumValToColor = {
     4: "red",
     5: "dimgrey"
 }
+let enumValToEmoji = {
+    0: "🟩",
+    1: "🟧",
+    2: "🟨",
+    3: "🟪",
+    4: "🟥",
+    5: "⬛"
+}
 let audioInterval = null;
 let audioData = null;
 let audioContext = new AudioContext();
@@ -14,7 +23,6 @@ let gainSetter = null;
 let isPlaying = false;
 let currentCalendarPage = 1;
 let calendarPageMax = 0;
-let isLoggedIn = false;
 let songDate = "";
 let guessContainer = null;
 let songInput = null;
@@ -49,6 +57,7 @@ $(document).ready(async function () {
                     },
                     success: async function (data) {
                         let resultData = JSON.parse(data);
+                        guessResult[guessCount - 1] = resultData.GuessResult;
                         if (resultData.GuessResult != 0) {
                             var currentGuessRow = guessContainer.children[guessCount - 1];
                             currentGuessRow.style.backgroundColor = enumValToColor[resultData.GuessResult];
@@ -65,6 +74,12 @@ $(document).ready(async function () {
                             }
                             else {
                                 songInputGroup.hidden = true;
+                                var currentGuessRow = guessContainer.children[6];
+                                currentGuessRow.firstElementChild.firstElementChild.innerHTML =
+                                    resultData.GuessData.Artist + " " + resultData.GuessData.AlbumTitle + " " + resultData.GuessData.SongTitle;
+                                currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
+                                currentGuessRow.firstElementChild.firstElementChild.hidden = false;
+                                currentGuessRow.hidden = false;
                             }
                         }
                         else {
@@ -78,6 +93,10 @@ $(document).ready(async function () {
                             guessCount = 6;
                             progressBar.style.width = "100%";
                         }
+                        if (guessCount == 6) {
+                            document.getElementById("ShareButton").disabled = false;
+                            document.getElementById("SkipButton").disabled = true;
+                        }
                         await PlaySong();
                     }
                 });
@@ -88,6 +107,7 @@ $(document).ready(async function () {
             }
         }
         else if (event.target.id === "SkipButton") {
+            guessResult[guessCount - 1] = 5;
             var currentGuessRow = guessContainer.children[guessCount - 1];
             currentGuessRow.style.backgroundColor = enumValToColor[5];
             currentGuessRow.firstElementChild.firstElementChild.innerHTML = "Skipped";
@@ -99,13 +119,25 @@ $(document).ready(async function () {
                 guessContainer.children[guessCount - 1].children[0].children[0].hidden = true;
                 guessContainer.children[guessCount - 1].children[0].appendChild(songInputGroup);
                 guessContainer.children[guessCount - 1].children[0].style.backgroundColor = "";
+                if (guessCount == 6) {
+                    document.getElementById("SkipButton").disabled = true;
+                }
             }
             else {
                 songInputGroup.hidden = true;
             }
-            if (!isLoggedIn) {
-                document.cookie = resultData.SongDate + "*" + resultData.GuessCount + "=" + "Skipped";
+        }
+        else if (event.target.id === "ShareButton") {
+            let shareString = "Cantare " + songDate + "\n🔊";
+            for (let i = 0; i < guessCount; i++) {
+                if (guessResult[i] != undefined) {
+                    shareString += enumValToEmoji[guessResult[i]];
+                }
+                else {
+                    shareString += "⬜";
+                }
             }
+            navigator.clipboard.writeText(shareString);
         }
         else if (event.target.id === "CalendarSelect") {
             let date = event.target.dataset.date;
@@ -185,7 +217,7 @@ function GetCalendarData() {
 }
 
 function LoadGuessData() {
-    if (isLoggedIn) {
+    if (false) {
 
     }
     else {
