@@ -52,7 +52,12 @@ namespace Cantare.Controllers
             }
             else
             {
-                var calendarData = await backendDatabase.SongCalender.FirstAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
+                var calendarData = await backendDatabase.SongCalender.FirstOrDefaultAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
+                if (calendarData == default)
+                {
+                    await songSelectionService.GenerateTodaysSong();
+                    calendarData = await backendDatabase.SongCalender.FirstOrDefaultAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
+                }
                 return File((await songSelectionService.GenerateSongSnippet(calendarData.SongInfo, calendarData.StartPoint)).songData, "audio/mpeg");
             }
             

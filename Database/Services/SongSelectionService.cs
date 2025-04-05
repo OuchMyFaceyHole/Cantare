@@ -138,7 +138,7 @@ namespace Cantare.Database.Services
             await backendDatabase.SaveChangesAsync();
         }
 
-        private async Task GenerateTodaysSong()
+        public async Task GenerateTodaysSong()
         {
             using var scope = scopeFactory.CreateScope();
             var backendDatabase = scope.ServiceProvider.GetRequiredService<BackendDatabase>();
