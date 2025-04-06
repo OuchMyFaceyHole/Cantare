@@ -64,6 +64,11 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddAuthorization();
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.KeepAliveTimeout = TimeSpan.MaxValue;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

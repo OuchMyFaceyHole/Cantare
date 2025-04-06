@@ -4,6 +4,7 @@ using Cantare.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cantare.Migrations
 {
     [DbContext(typeof(BackendDatabase))]
-    partial class BackendDatabaseModelSnapshot : ModelSnapshot
+    [Migration("20250406171235_RemoveUnnecessaryGuessData")]
+    partial class RemoveUnnecessaryGuessData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,15 +60,10 @@ namespace Cantare.Migrations
                     b.Property<int>("GuessStatus")
                         .HasColumnType("int");
 
-                    b.Property<int>("SongDatabaseKey")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserDateModelDatabaseKey")
                         .HasColumnType("int");
 
                     b.HasKey("DatabaseKey");
-
-                    b.HasIndex("SongDatabaseKey");
 
                     b.HasIndex("UserDateModelDatabaseKey");
 
@@ -375,19 +373,11 @@ namespace Cantare.Migrations
 
             modelBuilder.Entity("Cantare.Database.Models.GuessModel", b =>
                 {
-                    b.HasOne("Cantare.Database.Models.SongModel", "Song")
-                        .WithMany()
-                        .HasForeignKey("SongDatabaseKey")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Cantare.Database.Models.UserDateModel", null)
                         .WithMany("Guesses")
                         .HasForeignKey("UserDateModelDatabaseKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Song");
                 });
 
             modelBuilder.Entity("Cantare.Database.Models.SongModel", b =>

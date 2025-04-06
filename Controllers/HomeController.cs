@@ -10,6 +10,8 @@ using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Humanizer;
 
 namespace Cantare.Controllers
 {
@@ -24,12 +26,16 @@ namespace Cantare.Controllers
 
         private readonly IConfiguration configuration;
 
-        public HomeController(SongSelectionService songSelectionService, BackendDatabase backendDatabase, HTMLGenerator htmlGenerator , IConfiguration configuration)
+        private readonly UserManager<UserModel> userManager;
+
+        public HomeController(SongSelectionService songSelectionService, BackendDatabase backendDatabase, HTMLGenerator htmlGenerator, 
+            IConfiguration configuration, UserManager<UserModel> userManager)
         {
             this.songSelectionService = songSelectionService;
             this.backendDatabase = backendDatabase;
             this.htmlGenerator = htmlGenerator;
             this.configuration = configuration;
+            this.userManager = userManager;
         }
 
         public IActionResult Index()
@@ -82,7 +88,8 @@ namespace Cantare.Controllers
         {
             var guessStatus = GuessEnumeration.Wrong;
             var songData = songGuess.Split('/');
-            var songToCheck = await backendDatabase.SongCalender.FirstAsync(sng => sng.DateUsed == DateTime.Parse(songDate));
+            var songInput = await backendDatabase.AvailableSongs.FirstAsync(sng => sng.Artist == songData[0] && sng.AlbumTitle == songData[1] && sng.SongTitle == songData[2]);
+            var songToCheck = await backendDatabase.SongCalender.FirstAsync(sng => sng.DateUsed.Date == DateTime.Parse(songDate).Date);
 
             if (songToCheck.SongInfo.Artist == songData[0])
             {
@@ -99,31 +106,51 @@ namespace Cantare.Controllers
                 }
                 else
                 {
+                    guessStatus = GuessEnumeration.WrongSongSameArtist;
                     if (songToCheck.SongInfo.AlbumTitle.Length > songData[1].Length)
                     {
-                        if (songToCheck.SongInfo.AlbumTitle.Contains(songData[1]))
+                        if (songToCheck.SongInfo.AlbumTitle.Contains(songData[1], StringComparison.CurrentCultureIgnoreCase))
                         {
                             guessStatus = GuessEnumeration.WrongVersion;
                         }
                     }
                     else 
                     {
-                        if (songData[1].Contains(songToCheck.SongInfo.AlbumTitle))
+                        if (songData[1].Contains(songToCheck.SongInfo.AlbumTitle, StringComparison.CurrentCultureIgnoreCase))
                         {
                             guessStatus = GuessEnumeration.WrongVersion;
                         }
                     }
-                    guessStatus = GuessEnumeration.WrongSongSameArtist;
                 }
             }
+
             var returnData = JObject.FromObject(new
             {
                 GuessResult = guessStatus,
-                GuessCount = guessCount,
-                SongDate = songDate,
-                GuessData = songToCheck.SongInfo
+                GuessData = songInput,
+                CorrectSong = guessStatus == GuessEnumeration.Correct || guessCount == 6 ? songToCheck.SongInfo : null
             });
-            return Ok(returnData.ToString());
+
+            var user = await userManager.Users.Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Guesses).ThenInclude(guess => guess.Song)
+                .Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Song).FirstOrDefaultAsync(usr => usr.UserName == User.Identity.Name);
+            var guessForDate = user.CalendarAnswers.FirstOrDefault(ca => ca.SongDate == songToCheck.DateUsed);
+            
+            if (guessForDate == default)
+            {
+                guessForDate = new UserDateModel(songToCheck);
+                user.CalendarAnswers.Add(guessForDate);
+            }
+
+            if (guessForDate.Guesses.Exists(guess => guess.GuessStatus == GuessEnumeration.Correct) || guessForDate.Guesses.Count == 6)
+            {
+                return Ok(returnData.ToString(Newtonsoft.Json.Formatting.None));
+            }
+
+            guessForDate.Guesses.Add(new GuessModel(guessStatus, songInput));
+
+            await userManager.UpdateAsync(user);
+
+            return Ok(returnData.ToString(Newtonsoft.Json.Formatting.None));
         }
 
         [HttpGet("GetSongNames")]
@@ -148,6 +175,29 @@ namespace Cantare.Controllers
             return Ok(await htmlGenerator.GenerateHTML(HttpContext, "/Views/Home/PlayingAreaPartial.cshtml", DateTime.Parse(date)));
         }
 
+        [HttpGet("GetGuessData")]
+        public async Task<IActionResult> GetGuessData(string songDate)
+        {
+            var user = await userManager.Users.Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Guesses).ThenInclude(guess => guess.Song)
+                .Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Song).FirstOrDefaultAsync(usr => usr.UserName == User.Identity.Name);
+            var guessForDate = user.CalendarAnswers.FirstOrDefault(ca => ca.SongDate == DateTime.Parse(songDate).Date);
+
+            if (guessForDate == default)
+            {
+                return Ok();
+            }
+            else
+            {
+
+                var returnData = JObject.FromObject(new
+                {
+                    Guesses = guessForDate.Guesses,
+                    CorrectSong = guessForDate.Guesses.Count == 6 || guessForDate.Guesses.Exists(guess => guess.GuessStatus == GuessEnumeration.Correct) ? guessForDate.Song : null
+                });
+
+                return Ok(returnData.ToString(Newtonsoft.Json.Formatting.None));
+            }
+        }
         
     }
 }

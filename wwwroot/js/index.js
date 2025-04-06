@@ -26,14 +26,16 @@ let calendarPageMax = 0;
 let songDate = "";
 let guessContainer = null;
 let songInput = null;
+let progressBar = null;
+let songInputGroup = null;
 $(document).ready(async function () {
     const modal = new bootstrap.Modal(document.getElementById("modal"));
     audioData = await (await fetch('/GetSongAudioData')).arrayBuffer();
 
     gainSetter = audioContext.createGain();
     gainSetter.gain.value = 0.25;
-    var progressBar = document.getElementById("PlayProgress");
-    var songInputGroup = document.getElementById("SongInputGroup");
+    progressBar = document.getElementById("PlayProgress");
+    songInputGroup = document.getElementById("SongInputGroup");
     songInput = document.getElementById("SongInput");
     songInput.innerHTML = "";
     songInput.value = "";
@@ -58,45 +60,8 @@ $(document).ready(async function () {
                     success: async function (data) {
                         let resultData = JSON.parse(data);
                         guessResult[guessCount - 1] = resultData.GuessResult;
-                        if (resultData.GuessResult != 0) {
-                            var currentGuessRow = guessContainer.children[guessCount - 1];
-                            currentGuessRow.style.backgroundColor = enumValToColor[resultData.GuessResult];
-                            currentGuessRow.firstElementChild.firstElementChild.innerHTML = songInput.value;
-                            currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
-                            currentGuessRow.firstElementChild.firstElementChild.hidden = false;
-                            songInput.value = "";
-                            progressBar.style.width = (100 / 6) * guessCount + "%";
-                            if (guessCount < 6) {
-                                guessCount++;
-                                guessContainer.children[guessCount - 1].children[0].children[0].hidden = true;
-                                guessContainer.children[guessCount - 1].children[0].appendChild(songInputGroup);
-                                guessContainer.children[guessCount - 1].children[0].style.backgroundColor = "";
-                            }
-                            else {
-                                songInputGroup.hidden = true;
-                                var currentGuessRow = guessContainer.children[6];
-                                currentGuessRow.firstElementChild.firstElementChild.innerHTML =
-                                    resultData.GuessData.Artist + " " + resultData.GuessData.AlbumTitle + " " + resultData.GuessData.SongTitle;
-                                currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
-                                currentGuessRow.firstElementChild.firstElementChild.hidden = false;
-                                currentGuessRow.hidden = false;
-                            }
-                        }
-                        else {
-                            var currentGuessRow = guessContainer.children[guessCount - 1];
-                            currentGuessRow.style.backgroundColor = enumValToColor[resultData.GuessResult];
-                            currentGuessRow.firstElementChild.firstElementChild.innerHTML = songInput.value;
-                            currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
-                            currentGuessRow.firstElementChild.firstElementChild.hidden = false;
-                            currentGuessRow.firstElementChild.hidden = false;
-                            songInputGroup.hidden = true;
-                            guessCount = 6;
-                            progressBar.style.width = "100%";
-                        }
-                        if (guessCount == 6) {
-                            document.getElementById("ShareButton").disabled = false;
-                            document.getElementById("SkipButton").disabled = true;
-                        }
+                        FillGuessValues(resultData.GuessResult, resultData.GuessData, resultData.CorrectSong)
+                        guessCount++;
                         await PlaySong();
                     }
                 });
@@ -151,6 +116,7 @@ $(document).ready(async function () {
                     document.getElementById("PlayingArea").remove();
                     let main = document.getElementsByClassName("pb-3")[0];
                     main.innerHTML = data + main.innerHTML;
+                    songDate = document.getElementById("SongDate").innerHTML;
                     progressBar = document.getElementById("PlayProgress");
                     songInputGroup = document.getElementById("SongInputGroup");
                     songInput = document.getElementById("SongInput");
@@ -158,6 +124,7 @@ $(document).ready(async function () {
                     songInput.value = "";
                     guessContainer = document.getElementById("GuessContainer");
                     guessCount = 1;
+                    LoadGuessData();
                     workingSet = [];
                     document.getElementById("ShareButton").disabled = true;
                     document.getElementById("SkipButton").disabled = false;
@@ -223,30 +190,54 @@ function GetCalendarData() {
 }
 
 function LoadGuessData() {
-    if (false) {
+    $.ajax({
+        url: '/GetGuessData',
+        type: 'GET',
+        data: { songDate },
+        success: function (data) {
+            var guessData = JSON.parse(data);
+            guessData.Guesses.forEach((guess) => {
+                FillGuessValues(guess.GuessStatus, guess.Song, data.CorrectSong);
+                guessCount++;
+            });
+        }
+    });
+}
 
+function FillGuessValues(guessResult, guessData, correctSong) {
+    var currentGuessRow = guessContainer.children[guessCount - 1];
+    currentGuessRow.style.backgroundColor = enumValToColor[guessResult];
+    currentGuessRow.firstElementChild.firstElementChild.innerHTML = `${guessData.Artist} ${guessData.AlbumTitle} ${guessData.SongTitle}`;
+    currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
+    currentGuessRow.firstElementChild.firstElementChild.hidden = false;
+
+    if (guessResult != 0) {
+        songInput.value = "";
+        progressBar.style.width = (100 / 6) * guessCount + "%";
+        if (guessCount < 6) {
+            guessContainer.children[guessCount].children[0].children[0].hidden = true;
+            guessContainer.children[guessCount].children[0].appendChild(songInputGroup);
+            guessContainer.children[guessCount].children[0].style.backgroundColor = "";
+        }
+        else {
+            songInputGroup.hidden = true;
+            var currentGuessRow = guessContainer.children[6];
+            currentGuessRow.firstElementChild.firstElementChild.innerHTML =
+                correctSong.Artist + " " + correctSong.AlbumTitle + " " + correctSong.SongTitle;
+            currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
+            currentGuessRow.firstElementChild.firstElementChild.hidden = false;
+            currentGuessRow.hidden = false;
+        }
     }
     else {
-        let todaysGuesses = document.cookie.split(';').filter(val => val.includes(songDate));
-        if (todaysGuesses.length > 0) {
-            for (let i = 0; i < todaysGuesses.length; i++) {
-                let currentGuessRow = guessContainer.children[i];
-                let guess = todaysGuesses.find(val => val.includes(songDate + "*" + (i + 1))).split('=')[1];
-                if (guess === 'Skipped') {
-                    currentGuessRow.style.backgroundColor = enumValToColor[5];
-                    currentGuessRow.firstElementChild.firstElementChild.innerHTML = guess;
-                }
-                else {
-                    guess = JSON.parse(guess);
-                    let guessData = guess.GuessData;
-                    currentGuessRow.style.backgroundColor = enumValToColor[guess.GuessResult];
-                    currentGuessRow.firstElementChild.firstElementChild.innerHTML =
-                        guessData.Artist + '-' + guessData.AlbumTitle + '-' + guessData.SongTitle;
-                }
-                currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
-                currentGuessRow.firstElementChild.firstElementChild.hidden = false;
-            }
-        }
+        currentGuessRow.firstElementChild.hidden = false;
+        songInputGroup.hidden = true;
+        guessCount = 6;
+        progressBar.style.width = "100%";
+    }
+    if (guessCount == 6) {
+        document.getElementById("ShareButton").disabled = false;
+        document.getElementById("SkipButton").disabled = true;
     }
 }
 

@@ -9,16 +9,13 @@ namespace Cantare.Database.Models
 
         public GuessEnumeration GuessStatus { get; private set; }
 
-        public int GuessNumber { get; private set; }
-
         public SongModel Song { get; set; }
 
         public GuessModel() { }
 
-        public GuessModel(GuessEnumeration guessStatus, int guessNumber, SongModel song)
+        public GuessModel(GuessEnumeration guessStatus, SongModel song)
         {
             GuessStatus = guessStatus;
-            GuessNumber = guessNumber;
             Song = song;
         }
     }

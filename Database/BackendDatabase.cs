@@ -26,6 +26,11 @@ namespace Cantare.Database
                 .WithOne()
                 .IsRequired();
 
+            modelBuilder.Entity<GuessModel>()
+                .HasOne(u => u.Song)
+                .WithMany()
+                .IsRequired();
+
             modelBuilder.Entity<CalendarSongModel>().Navigation(nav => nav.SongInfo).AutoInclude();
 
             base.OnModelCreating(modelBuilder);
