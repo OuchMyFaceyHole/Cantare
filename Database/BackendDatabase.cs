@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Cantare.Database.Models;
+﻿using Cantare.Database.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cantare.Database
 {
@@ -12,7 +12,7 @@ namespace Cantare.Database
 
         public DbSet<CalendarSongModel> SongCalender { get; set; }
 
-        public DbSet<SongImageModel> SongImages { get; set; }   
+        public DbSet<SongImageModel> SongImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

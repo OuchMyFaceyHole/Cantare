@@ -1,14 +1,10 @@
 ﻿
+using Cantare.Database.Models;
 using FFMpegCore;
 using FFMpegCore.Pipes;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
-using Cantare.Database.Models;
-using Cantare.Models;
 using System.Collections.Concurrent;
-using System.Runtime.InteropServices;
-using System.Linq;
 
 namespace Cantare.Database.Services
 {
@@ -107,8 +103,8 @@ namespace Cantare.Database.Services
 
                             var artist = songTags.ContainsKey("album_artist") ? songTags["album_artist"] : songTags["artist"];
                             await backendDatabase.AvailableSongs.AddAsync(new Models.SongModel(
-                                artist.Trim(), songTags["album"].Trim(), songTags["title"].Trim(), songPath, 
-                                (int)metaData.Duration.TotalSeconds, metaData.PrimaryAudioStream.Index, existingImageData));;
+                                artist.Trim(), songTags["album"].Trim(), songTags["title"].Trim(), songPath,
+                                (int)metaData.Duration.TotalSeconds, metaData.PrimaryAudioStream.Index, existingImageData)); ;
                         }
                         catch (KeyNotFoundException)
                         {
@@ -146,7 +142,7 @@ namespace Cantare.Database.Services
             var songToUse = backendDatabase.AvailableSongs.Skip(rand.Next(0, backendDatabase.AvailableSongs.Count())).Take(1).ElementAt(0);
 
             var songData = await GenerateSongSnippet(songToUse);
-            
+
             await backendDatabase.SongCalender.AddAsync(new Models.CalendarSongModel(songData.startPoint, songToUse));
             await backendDatabase.SaveChangesAsync();
             TodaysSongData.Add(songData.songData);

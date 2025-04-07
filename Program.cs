@@ -1,14 +1,15 @@
+using Cantare.Database;
+using Cantare.Database.Models;
+using Cantare.Database.Services;
 using FFMpegCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Cantare.Database;
-using Cantare.Database.Services;
-using Cantare.Database.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-GlobalFFOptions.Configure(new FFOptions { 
-    BinaryFolder = builder.Configuration.GetValue<string>("FFMPEGBinaryLocation"), 
+GlobalFFOptions.Configure(new FFOptions
+{
+    BinaryFolder = builder.Configuration.GetValue<string>("FFMPEGBinaryLocation"),
     TemporaryFilesFolder = builder.Configuration.GetValue<string>("FFMPEGTempLocation")
 });
 
@@ -17,7 +18,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSingleton<SongSelectionService>();
 
-builder.Services.AddTransient<Cantare.Helpers.HTMLGenerator>(); 
+builder.Services.AddTransient<Cantare.Helpers.HTMLGenerator>();
 
 var connectionString = builder.Configuration.GetConnectionString("BackendDatabase");
 builder.Services.AddDbContext<BackendDatabase>(dbContextOptions =>

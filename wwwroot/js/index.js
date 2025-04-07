@@ -29,19 +29,12 @@ let songInput = null;
 let progressBar = null;
 let songInputGroup = null;
 $(document).ready(async function () {
+    InitRequiredElements();
     const modal = new bootstrap.Modal(document.getElementById("modal"));
-    audioData = await (await fetch('/GetSongAudioData')).arrayBuffer();
-
+    audioData = await (await fetch('/GetSongAudioData?' + new URLSearchParams({ date: songDate }))).arrayBuffer();
     gainSetter = audioContext.createGain();
     gainSetter.gain.value = 0.25;
-    progressBar = document.getElementById("PlayProgress");
-    songInputGroup = document.getElementById("SongInputGroup");
-    songInput = document.getElementById("SongInput");
-    songInput.innerHTML = "";
-    songInput.value = "";
-    guessContainer = document.getElementById("GuessContainer");
     calendarPageMax = parseInt(document.getElementById("pageMax").innerHTML);
-    songDate = document.getElementById("SongDate").innerHTML;
     LoadGuessData();
     document.addEventListener('click', async function (event) {
         if (event.target.id === "PlayButton" && !isPlaying) {
@@ -53,15 +46,13 @@ $(document).ready(async function () {
                     url: '/SongGuess',
                     type: 'POST',
                     data: {
-                        songDate: document.getElementById("SongDate").innerHTML,
+                        songDate: songDate,
                         songGuess: songInput.dataset.trueValue,
                         guessCount: guessCount
                     },
                     success: async function (data) {
                         let resultData = JSON.parse(data);
-                        guessResult[guessCount - 1] = resultData.GuessResult;
                         FillGuessValues(resultData.GuessResult, resultData.GuessData, resultData.CorrectSong)
-                        guessCount++;
                         await PlaySong();
                     }
                 });
@@ -72,31 +63,23 @@ $(document).ready(async function () {
             }
         }
         else if (event.target.id === "SkipButton") {
-            guessResult[guessCount - 1] = 5;
-            var currentGuessRow = guessContainer.children[guessCount - 1];
-            currentGuessRow.style.backgroundColor = enumValToColor[5];
-            currentGuessRow.firstElementChild.firstElementChild.innerHTML = "Skipped";
-            currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
-            currentGuessRow.firstElementChild.firstElementChild.hidden = false;
-            progressBar.style.width = (100 / 6) * guessCount + "%";
-            if (guessCount < 6) {
-                guessCount++;
-                guessContainer.children[guessCount - 1].children[0].children[0].hidden = true;
-                guessContainer.children[guessCount - 1].children[0].appendChild(songInputGroup);
-                guessContainer.children[guessCount - 1].children[0].style.backgroundColor = "";
-                if (guessCount == 6) {
-                    document.getElementById("SkipButton").disabled = true;
+            $.ajax({
+                url: '/SongSkip',
+                type: "POST",
+                data: {
+                    songDate: songDate
+                },
+                success: async function (data) {
+                    FillGuessValues(5, null, null);
+                    await PlaySong();
                 }
-            }
-            else {
-                songInputGroup.hidden = true;
-            }
+            })
         }
         else if (event.target.id === "ShareButton") {
             let shareString = "Cantare " + songDate + "\n🔊";
-            for (let i = 0; i < guessCount; i++) {
-                if (guessResult[i] != undefined) {
-                    shareString += enumValToEmoji[guessResult[i]];
+            for (let i = 1; i < guessCount; i++) {
+                if (guessResult[i -1] != undefined) {
+                    shareString += enumValToEmoji[guessResult[i - 1]];
                 }
                 else {
                     shareString += "⬜";
@@ -116,13 +99,7 @@ $(document).ready(async function () {
                     document.getElementById("PlayingArea").remove();
                     let main = document.getElementsByClassName("pb-3")[0];
                     main.innerHTML = data + main.innerHTML;
-                    songDate = document.getElementById("SongDate").innerHTML;
-                    progressBar = document.getElementById("PlayProgress");
-                    songInputGroup = document.getElementById("SongInputGroup");
-                    songInput = document.getElementById("SongInput");
-                    songInput.innerHTML = "";
-                    songInput.value = "";
-                    guessContainer = document.getElementById("GuessContainer");
+                    InitRequiredElements();
                     guessCount = 1;
                     LoadGuessData();
                     workingSet = [];
@@ -167,6 +144,16 @@ $(document).ready(async function () {
     });
 });
 
+function InitRequiredElements() {
+    songDate = document.getElementById("SongDate").innerHTML;
+    progressBar = document.getElementById("PlayProgress");
+    songInputGroup = document.getElementById("SongInputGroup");
+    songInput = document.getElementById("SongInput");
+    songInput.innerHTML = "";
+    songInput.value = "";
+    guessContainer = document.getElementById("GuessContainer");
+}
+
 function ElementError(element) {
     element.classList.add("ahashakeheartache");
     element.style.outlineColor = "red";
@@ -197,21 +184,21 @@ function LoadGuessData() {
         success: function (data) {
             var guessData = JSON.parse(data);
             guessData.Guesses.forEach((guess) => {
-                FillGuessValues(guess.GuessStatus, guess.Song, data.CorrectSong);
-                guessCount++;
+                FillGuessValues(guess.GuessStatus, guess.Song, guessData.CorrectSong);
             });
         }
     });
 }
 
-function FillGuessValues(guessResult, guessData, correctSong) {
+function FillGuessValues(guessInputResult, guessInputData, correctSong) {
+    guessResult[guessCount - 1] = guessInputResult;
     var currentGuessRow = guessContainer.children[guessCount - 1];
-    currentGuessRow.style.backgroundColor = enumValToColor[guessResult];
-    currentGuessRow.firstElementChild.firstElementChild.innerHTML = `${guessData.Artist} ${guessData.AlbumTitle} ${guessData.SongTitle}`;
+    currentGuessRow.style.backgroundColor = enumValToColor[guessInputResult];
+    currentGuessRow.firstElementChild.firstElementChild.innerHTML = guessInputResult == 5 ? "Skipped" : `${guessInputData.Artist} ${guessInputData.AlbumTitle} ${guessInputData.SongTitle}`;
     currentGuessRow.firstElementChild.firstElementChild.style.margin = "0.5rem";
     currentGuessRow.firstElementChild.firstElementChild.hidden = false;
 
-    if (guessResult != 0) {
+    if (guessInputResult != 0) {
         songInput.value = "";
         progressBar.style.width = (100 / 6) * guessCount + "%";
         if (guessCount < 6) {
@@ -239,6 +226,8 @@ function FillGuessValues(guessResult, guessData, correctSong) {
         document.getElementById("ShareButton").disabled = false;
         document.getElementById("SkipButton").disabled = true;
     }
+
+    guessCount++;
 }
 
 async function PlaySong() {

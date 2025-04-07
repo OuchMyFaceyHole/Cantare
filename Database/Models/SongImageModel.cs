@@ -6,7 +6,7 @@
         public int DatabaseKey { get; set; }
         public byte[] ImageData { get; set; }
 
-        public SongImageModel() { } 
+        public SongImageModel() { }
 
         public SongImageModel(byte[] imageData)
         {

@@ -1,17 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Cantare.Database;
+﻿using Cantare.Database;
 using Cantare.Database.Models;
 using Cantare.Database.Services;
-using Cantare.Models;
-using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
 using Cantare.Helpers;
-using Newtonsoft.Json.Linq;
-using System.Security.Cryptography;
-using System.Text;
+using Cantare.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Humanizer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 namespace Cantare.Controllers
 {
@@ -28,7 +25,7 @@ namespace Cantare.Controllers
 
         private readonly UserManager<UserModel> userManager;
 
-        public HomeController(SongSelectionService songSelectionService, BackendDatabase backendDatabase, HTMLGenerator htmlGenerator, 
+        public HomeController(SongSelectionService songSelectionService, BackendDatabase backendDatabase, HTMLGenerator htmlGenerator,
             IConfiguration configuration, UserManager<UserModel> userManager)
         {
             this.songSelectionService = songSelectionService;
@@ -42,7 +39,7 @@ namespace Cantare.Controllers
         {
             return View();
         }
-        
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
@@ -52,37 +49,22 @@ namespace Cantare.Controllers
         [HttpGet("GetSongAudioData")]
         public async Task<IActionResult> GetSongAudioData(string date = "")
         {
-            if (date == "")
+            var calendarData = await backendDatabase.SongCalender.FirstOrDefaultAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
+            if (calendarData == default)
             {
-                return File(songSelectionService.TodaysSongData.First(), "audio/mpeg");
+                await songSelectionService.GenerateTodaysSong();
+                calendarData = await backendDatabase.SongCalender.FirstOrDefaultAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
             }
-            else
-            {
-                var calendarData = await backendDatabase.SongCalender.FirstOrDefaultAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
-                if (calendarData == default)
-                {
-                    await songSelectionService.GenerateTodaysSong();
-                    calendarData = await backendDatabase.SongCalender.FirstOrDefaultAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
-                }
-                return File((await songSelectionService.GenerateSongSnippet(calendarData.SongInfo, calendarData.StartPoint)).songData, "audio/mpeg");
-            }
-            
+            return File((await songSelectionService.GenerateSongSnippet(calendarData.SongInfo, calendarData.StartPoint)).songData, "audio/mpeg");
         }
 
         [HttpGet("GetSongImageData")]
         public async Task<IActionResult> GetSongImageData(string date = "")
         {
-            if (date == "")
-            {
-                return File(songSelectionService.TodaysSongData.First(), "image/jpeg");
-            }
-            else
-            {
-                var calendarData = await backendDatabase.SongCalender.Include(song => song.SongInfo.SongImage).FirstAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
-                return File(calendarData.SongInfo.SongImage.ImageData, "image/jpeg");
-            }
+            var calendarData = await backendDatabase.SongCalender.Include(song => song.SongInfo.SongImage).FirstAsync(song => song.DateUsed.Date == DateTime.Parse(date).Date);
+            return File(calendarData.SongInfo.SongImage.ImageData, "image/jpeg");
         }
-        
+
         [HttpPost("SongGuess")]
         public async Task<IActionResult> SongGuess(string songDate, string songGuess, int guessCount)
         {
@@ -114,7 +96,7 @@ namespace Cantare.Controllers
                             guessStatus = GuessEnumeration.WrongVersion;
                         }
                     }
-                    else 
+                    else
                     {
                         if (songData[1].Contains(songToCheck.SongInfo.AlbumTitle, StringComparison.CurrentCultureIgnoreCase))
                         {
@@ -134,7 +116,7 @@ namespace Cantare.Controllers
             var user = await userManager.Users.Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Guesses).ThenInclude(guess => guess.Song)
                 .Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Song).FirstOrDefaultAsync(usr => usr.UserName == User.Identity.Name);
             var guessForDate = user.CalendarAnswers.FirstOrDefault(ca => ca.SongDate == songToCheck.DateUsed);
-            
+
             if (guessForDate == default)
             {
                 guessForDate = new UserDateModel(songToCheck);
@@ -153,14 +135,33 @@ namespace Cantare.Controllers
             return Ok(returnData.ToString(Newtonsoft.Json.Formatting.None));
         }
 
+        [HttpPost("SongSkip")]
+        public async Task<IActionResult> SongSkip(string songDate)
+        {
+            var songToCheck = await backendDatabase.SongCalender.FirstAsync(sng => sng.DateUsed.Date == DateTime.Parse(songDate).Date);
+            var user = await userManager.Users.Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Guesses).ThenInclude(guess => guess.Song)
+                .Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Song).FirstOrDefaultAsync(usr => usr.UserName == User.Identity.Name);
+            var guessForDate = user.CalendarAnswers.FirstOrDefault(ca => ca.SongDate == songToCheck.DateUsed);
+
+            if (guessForDate == default)
+            {
+                guessForDate = new UserDateModel(songToCheck);
+                user.CalendarAnswers.Add(guessForDate);
+            }
+            guessForDate.Guesses.Add(new GuessModel(GuessEnumeration.Skipped, songToCheck.SongInfo));
+            await userManager.UpdateAsync(user);
+
+            return Ok();
+        }
+
         [HttpGet("GetSongNames")]
         public IActionResult GetSongNames(string songTitleStart)
         {
-            var songs = backendDatabase.AvailableSongs.Where(sng => 
-                EF.Functions.Like(sng.SongTitle, $"{songTitleStart}%")).Take(6).Select(sng => 
+            var songs = backendDatabase.AvailableSongs.Where(sng =>
+                EF.Functions.Like(sng.SongTitle, $"{songTitleStart}%")).Take(6).Select(sng =>
                     $"{sng.Artist}/{sng.AlbumTitle}/{sng.SongTitle}");
 
-           return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(songs));
+            return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(songs));
         }
 
         [HttpGet("GetCalendarData")]
@@ -192,12 +193,12 @@ namespace Cantare.Controllers
                 var returnData = JObject.FromObject(new
                 {
                     Guesses = guessForDate.Guesses,
-                    CorrectSong = guessForDate.Guesses.Count == 6 || guessForDate.Guesses.Exists(guess => guess.GuessStatus == GuessEnumeration.Correct) ? guessForDate.Song : null
+                    CorrectSong = guessForDate.Guesses.Count == 6 || guessForDate.Guesses.Exists(guess => guess.GuessStatus == GuessEnumeration.Correct) ? guessForDate.Song.SongInfo : null
                 });
 
                 return Ok(returnData.ToString(Newtonsoft.Json.Formatting.None));
             }
         }
-        
+
     }
 }

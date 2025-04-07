@@ -1,10 +1,14 @@
-﻿@inject Cantare.Database.BackendDatabase backendDatabase;
+﻿@using Microsoft.EntityFrameworkCore
+@inject Cantare.Database.BackendDatabase backendDatabase;
 @model int
 @{
     var calendarResults = backendDatabase.SongCalender.OrderByDescending(song => song.DateUsed).Skip((12 * Model)).Take(12).Select(song => song.DateUsed);
     var totalSongs = calendarResults.Count();
     var rowCount = totalSongs / 4 + (totalSongs % 4 > 0 ? 1 : 0);
     var songCount = 0;
+
+    var userData = await backendDatabase.Users.Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Guesses).ThenInclude(guess => guess.Song)
+                .Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Song).FirstOrDefaultAsync(usr => usr.UserName == User.Identity.Name);
 }
 
 <div id="CalendarPage-@Model" class="container-fluid">
@@ -14,11 +18,15 @@
             @for (var j = songCount; songCount < (j + 4) && songCount < totalSongs; songCount++)
             {
                 var result = calendarResults.ElementAt(songCount);
+                var calendarAnswer = userData.CalendarAnswers.FirstOrDefault(cal => cal.SongDate.Date == result.Date);
                 var date = @result.ToShortDateString();
                 <div class="col">
                     <button id="CalendarSelect" data-date="@(date.Replace('/', '-'))" class="btn btn-outline-secondary card" style="width:100%" type="button">
                         <div class="rounded" style="overflow:hidden;pointer-events: none">
-                            @if (Model == 0 && songCount == 0)
+                            @if (calendarAnswer == default || !(calendarAnswer.Guesses.Exists(guess => guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.Correct || 
+                                guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.WrongVersion || 
+                                guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.WrongSongSameAlbum) ||
+                                calendarAnswer.Guesses.Count == 6))
                             {
                                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="card-img-top"
                                 style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none" />
