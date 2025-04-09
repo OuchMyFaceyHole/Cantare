@@ -148,10 +148,18 @@ namespace Cantare.Controllers
                 guessForDate = new UserDateModel(songToCheck);
                 user.CalendarAnswers.Add(guessForDate);
             }
-            guessForDate.Guesses.Add(new GuessModel(GuessEnumeration.Skipped, songToCheck.SongInfo));
-            await userManager.UpdateAsync(user);
-
-            return Ok();
+            
+            if (guessForDate.Guesses.Count < 5)
+            {
+                guessForDate.Guesses.Add(new GuessModel(GuessEnumeration.Skipped, songToCheck.SongInfo));
+                await userManager.UpdateAsync(user);
+                return Ok();
+            }
+            else
+            {
+                return Forbid();
+            }
+            
         }
 
         [HttpGet("GetSongNames")]

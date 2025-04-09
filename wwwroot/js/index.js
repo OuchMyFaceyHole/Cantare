@@ -72,6 +72,9 @@ $(document).ready(async function () {
                 success: async function (data) {
                     FillGuessValues(5, null, null);
                     await PlaySong();
+                },
+                error: function (data) {
+                    ElementError(guessContainer.children[5]);
                 }
             })
         }
