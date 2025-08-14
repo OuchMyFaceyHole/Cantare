@@ -28,6 +28,7 @@ let guessContainer = null;
 let songInput = null;
 let progressBar = null;
 let songInputGroup = null;
+let songLoaded = false;
 $(document).ready(async function () {
     InitRequiredElements();
     const modal = new bootstrap.Modal(document.getElementById("modal"));
@@ -36,6 +37,7 @@ $(document).ready(async function () {
     gainSetter.gain.value = 0.25;
     calendarPageMax = parseInt(document.getElementById("pageMax").innerHTML);
     LoadGuessData();
+    SongLoadComplete();
     document.addEventListener('click', async function (event) {
         if (event.target.id === "PlayButton" && !isPlaying) {
             await PlaySong();
@@ -105,9 +107,8 @@ $(document).ready(async function () {
                     InitRequiredElements();
                     guessCount = 1;
                     LoadGuessData();
+                    SongLoadComplete();
                     workingSet = [];
-                    document.getElementById("ShareButton").disabled = true;
-                    document.getElementById("SkipButton").disabled = false;
                 }
             })
         }
@@ -243,4 +244,11 @@ async function PlaySong() {
     audioSource.connect(gainSetter).connect(audioContext.destination);
     audioSource.start(0, 0, guessCount);
     isPlaying = true;
+}
+
+function SongLoadComplete() {
+    document.getElementById("PlayButton").className = "btn btn-primary"
+    if (guessCount < 5) {
+        document.getElementById("SkipButton").disabled = false;
+    }
 }

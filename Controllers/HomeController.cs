@@ -69,7 +69,7 @@ namespace Cantare.Controllers
         public async Task<IActionResult> SongGuess(string songDate, string songGuess, int guessCount)
         {
             var guessStatus = GuessEnumeration.Wrong;
-            var songData = songGuess.Split('/');
+            var songData = songGuess.Split('/', 3);
             var songInput = await backendDatabase.AvailableSongs.FirstAsync(sng => sng.Artist == songData[0] && sng.AlbumTitle == songData[1] && sng.SongTitle == songData[2]);
             var songToCheck = await backendDatabase.SongCalender.FirstAsync(sng => sng.DateUsed.Date == DateTime.Parse(songDate).Date);
 
@@ -148,7 +148,7 @@ namespace Cantare.Controllers
                 guessForDate = new UserDateModel(songToCheck);
                 user.CalendarAnswers.Add(guessForDate);
             }
-            
+
             if (guessForDate.Guesses.Count < 5)
             {
                 guessForDate.Guesses.Add(new GuessModel(GuessEnumeration.Skipped, songToCheck.SongInfo));
@@ -159,7 +159,7 @@ namespace Cantare.Controllers
             {
                 return Forbid();
             }
-            
+
         }
 
         [HttpGet("GetSongNames")]

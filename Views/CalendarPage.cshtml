@@ -18,24 +18,31 @@
             @for (var j = songCount; songCount < (j + 4) && songCount < totalSongs; songCount++)
             {
                 var result = calendarResults.ElementAt(songCount);
-                var calendarAnswer = userData.CalendarAnswers.FirstOrDefault(cal => cal.SongDate.Date == result.Date);
+                var calendarAnswer = userData.CalendarAnswers.FirstOrDefault(cal => cal.SongDate.Date == result.Date) ?? new Cantare.Database.Models.UserDateModel();
                 var date = @result.ToShortDateString();
                 <div class="col">
                     <button id="CalendarSelect" data-date="@(date.Replace('/', '-'))" class="btn btn-outline-secondary card" style="width:100%" type="button">
                         <div class="rounded" style="overflow:hidden;pointer-events: none">
                             @if (calendarAnswer == default || !(calendarAnswer.Guesses.Exists(guess => guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.Correct || 
-                                guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.WrongVersion || 
-                                guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.WrongSongSameAlbum) ||
-                                calendarAnswer.Guesses.Count == 6))
+                            guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.WrongVersion || 
+                            guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.WrongSongSameAlbum) ||
+                            calendarAnswer.Guesses.Count == 6))
                             {
                                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="card-img-top"
-                                style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none" />
+                                            style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none; max-height: 130px" />
                             }
                             else
                             {
                                 <img src="/GetSongImageData?date=@(date.Replace('/', '-'))" class="card-img-top"
-                                     style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none" />
+                                style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none; max-height: 130px" />
                             }
+                        </div>
+                        <div class="card-img-overlay">
+                            <div class="card-text container-fluid d-flex align-items-end h-75" style="text-align:center;padding-top: 1rem">
+                                <div class="row row-cols-sm-6" style="padding:0">
+                                    @Html.Raw(GenerateImageOverlay(calendarAnswer?.Guesses))
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body" style="padding: 0.375rem; padding-bottom: 0;pointer-events: none">
                             <h5 class="card-title">@date</h5>
@@ -46,3 +53,37 @@
         </div>
     }
 </div> 
+
+@functions{
+    string GetColorCode(Cantare.Database.Models.GuessEnumeration guess)
+    {
+        switch (guess)
+        {
+            case Cantare.Database.Models.GuessEnumeration.Correct: return "green";
+            case Cantare.Database.Models.GuessEnumeration.Wrong: return "red"; 
+            case Cantare.Database.Models.GuessEnumeration.Skipped: return "dimgrey";
+            case Cantare.Database.Models.GuessEnumeration.WrongVersion: return "orange";
+            case Cantare.Database.Models.GuessEnumeration.WrongSongSameAlbum: return "yellow";
+            case Cantare.Database.Models.GuessEnumeration.WrongSongSameArtist: return "magenta";
+        }
+
+        return "";
+    }
+
+    string GenerateImageOverlay(List<Cantare.Database.Models.GuessModel> userAnswers)
+    {
+        var returnData = "";
+        for (var i = 0; i < 6; i++)
+        {
+            if (i < userAnswers.Count)
+            {
+                returnData += "<div class=\"rounded border border-dark-subtle\" style=\"background-color: " + GetColorCode(userAnswers[i].GuessStatus) + ";height: 0.9rem; width: 0.9rem;padding:0;margin-right:0.1rem\"></div>";
+            }
+            else
+            {
+                returnData += "<div class=\"rounded border border-dark-subtle\" style=\"background-color: antiquewhite;height: 0.9rem; width: 0.9rem;padding:0;margin-right:0.1rem\"></div>";
+            }
+        }
+        return returnData;
+    }
+}
