@@ -166,7 +166,7 @@ namespace Cantare.Controllers
         public IActionResult GetSongNames(string songTitleStart)
         {
             var songs = backendDatabase.AvailableSongs.Where(sng =>
-                EF.Functions.Like(sng.SongTitle, $"{songTitleStart}%")).Take(6).Select(sng =>
+                EF.Functions.Like(sng.SongTitle, $"%{songTitleStart}%")).Take(6).Select(sng =>
                     $"{sng.Artist}/{sng.AlbumTitle}/{sng.SongTitle}");
 
             return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(songs));
