@@ -2,56 +2,51 @@
 @inject Cantare.Database.BackendDatabase backendDatabase;
 @model int
 @{
-    var calendarResults = backendDatabase.SongCalender.OrderByDescending(song => song.DateUsed).Skip((12 * Model)).Take(12).Select(song => song.DateUsed);
+    var calendarResults = backendDatabase.SongCalender.OrderByDescending(song => song.DateUsed).Skip((18 * Model)).Take(18).Select(song => song.DateUsed);
     var totalSongs = calendarResults.Count();
-    var rowCount = totalSongs / 4 + (totalSongs % 4 > 0 ? 1 : 0);
-    var songCount = 0;
 
     var userData = await backendDatabase.Users.Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Guesses).ThenInclude(guess => guess.Song)
                 .Include(usr => usr.CalendarAnswers).ThenInclude(answer => answer.Song).FirstOrDefaultAsync(usr => usr.UserName == User.Identity.Name);
 }
 
 <div id="CalendarPage-@Model" class="container-fluid">
-    @for (var i = 0; i < rowCount; i++)
-    {
-        <div class="row row-cols-4" @(i != (rowCount - 1) ? "style=margin-bottom:1rem" : "")>
-            @for (var j = songCount; songCount < (j + 4) && songCount < totalSongs; songCount++)
-            {
-                var result = calendarResults.ElementAt(songCount);
-                var calendarAnswer = userData.CalendarAnswers.FirstOrDefault(cal => cal.SongDate.Date == result.Date) ?? new Cantare.Database.Models.UserDateModel();
-                var date = @result.ToShortDateString();
-                <div class="col">
-                    <button id="CalendarSelect" data-date="@(date.Replace('/', '-'))" class="btn btn-outline-secondary card" style="width:100%" type="button">
-                        <div class="rounded" style="overflow:hidden;pointer-events: none">
+    <div class="row row-cols-6">
+        @for (var j = 0; j < totalSongs; j++)
+        {
+            var result = calendarResults.ElementAt(j);
+            var calendarAnswer = userData.CalendarAnswers.FirstOrDefault(cal => cal.SongDate.Date == result.Date) ?? new Cantare.Database.Models.UserDateModel();
+            var date = @result.ToShortDateString();
+            <div class="col" style="width: 179.2px; height:181.17px;margin-top: 10px; margin-bottom: 10px; padding: 0 12px 0 12px">
+                <button id="CalendarSelect" data-date="@(date.Replace('/', '-'))" class="btn btn-outline-secondary card" style="width: 155.2px; height: 181.2px" type="button">
+                    <div class="rounded" style="overflow:hidden;pointer-events: none; width: 130px; height: 130px">
                             @if (calendarAnswer == default || !(calendarAnswer.Guesses.Exists(guess => guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.Correct || 
                             guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.WrongVersion || 
                             guess.GuessStatus == Cantare.Database.Models.GuessEnumeration.WrongSongSameAlbum) ||
                             calendarAnswer.Guesses.Count == 6))
                             {
                                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="card-img-top"
-                                            style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none; max-height: 130px" />
+                                            style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none; height: 130px; width: 130px" />
                             }
                             else
                             {
                                 <img src="/GetSongImageData?date=@(date.Replace('/', '-'))" class="card-img-top"
-                                style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none; max-height: 130px" />
+                                style="filter: blur(10px);-webkit-filter: blur(10px);pointer-events: none; height: 130px; width: 130px" />
                             }
                         </div>
-                        <div class="card-img-overlay" style="overflow:hidden;pointer-events: none">
+                    <div class="card-img-overlay" style="overflow:hidden;pointer-events: none">
                             <div class="card-text container-fluid d-flex align-items-end h-75" style="text-align:center;padding-top: 1rem">
                                 <div class="row row-cols-sm-6" style="padding:0">
                                     @Html.Raw(GenerateImageOverlay(calendarAnswer?.Guesses))
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body" style="padding: 0.375rem; padding-bottom: 0;pointer-events: none">
-                            <h5 class="card-title">@date</h5>
-                        </div>
-                    </button>
-                </div>
-            }
-        </div>
-    }
+                    <div class="card-body" style="padding: 6px; padding-bottom: 0;pointer-events: none;width: 118px; height: 32px">
+                        <h5 class="card-title" style="width: 118px; height: 24px;font-size: 20px">@date</h5>
+                    </div>
+                </button>
+            </div>
+        }
+    </div>
 </div> 
 
 @functions{
@@ -77,11 +72,11 @@
         {
             if (i < userAnswers.Count)
             {
-                returnData += "<div class=\"rounded border border-dark-subtle\" style=\"background-color: " + GetColorCode(userAnswers[i].GuessStatus) + ";height: 0.9rem; width: 0.9rem;padding:0;margin-right:0.1rem\"></div>";
+                returnData += "<div class=\"rounded border border-dark-subtle\" style=\"background-color: " + GetColorCode(userAnswers[i].GuessStatus) + ";height: 13.2px; width: 13.2px;padding:0;margin-right:0.6px\"></div>";
             }
             else
             {
-                returnData += "<div class=\"rounded border border-dark-subtle\" style=\"background-color: antiquewhite;height: 0.9rem; width: 0.9rem;padding:0;margin-right:0.1rem\"></div>";
+                returnData += "<div class=\"rounded border border-dark-subtle\" style=\"background-color: antiquewhite;height: 13.2px; width: 13.2px;padding:0;margin-right:0.6px\"></div>";
             }
         }
         return returnData;
